@@ -1,0 +1,110 @@
+const Enrollment = require('../models/Enrollment');
+const Course = require('../models/Course');
+
+// @desc    Enroll in a course
+// @route   POST /api/enrollments
+// @access  Private/Student
+const enrollInCourse = async (req, res, next) => {
+    try {
+        const { courseId } = req.body;
+
+        const course = await Course.findById(courseId);
+        if (!course) {
+            res.status(404);
+            throw new Error('Course not found');
+        }
+
+        const existingEnrollment = await Enrollment.findOne({
+            student: req.user._id,
+            course: courseId,
+        });
+
+        if (existingEnrollment) {
+            res.status(400);
+            throw new Error('Already enrolled');
+        }
+
+        const createdEnrollment = await Enrollment.create({
+            student: req.user._id,
+            course: courseId,
+        });
+
+        // Update Course enrollment count
+        course.enrolledCount = (course.enrolledCount || 0) + 1;
+        await course.save();
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('enrollment:new', { courseId: course._id, studentId: req.user._id });
+        }
+
+        res.status(201).json(createdEnrollment);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get my enrollments
+// @route   GET /api/enrollments/my
+// @access  Private/Student
+const getMyEnrollments = async (req, res, next) => {
+    try {
+        const enrollments = await Enrollment.find({ student: req.user._id }).populate('course');
+        res.json(enrollments.filter(e => e.course));
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update progress for an enrollment
+// @route   PUT /api/enrollments/progress
+// @access  Private/Student
+const updateProgress = async (req, res, next) => {
+    try {
+        const { courseId, chapterId } = req.body;
+
+        const enrollment = await Enrollment.findOne({
+            student: req.user._id,
+            course: courseId,
+        }).populate('course');
+
+        if (!enrollment) {
+            res.status(404);
+            throw new Error('Enrollment not found');
+        }
+
+        // Add chapter to completed list if not already there
+        if (!enrollment.completedChapters.includes(chapterId)) {
+            enrollment.completedChapters.push(chapterId);
+
+            // Calculate percentage
+            const totalChapters = enrollment.course.chapters?.length || 1;
+            const completedCount = enrollment.completedChapters.length;
+            enrollment.progress = Math.min(100, Math.round((completedCount / totalChapters) * 100));
+
+            if (enrollment.progress === 100) {
+                enrollment.isCompleted = true;
+            }
+
+            await enrollment.save();
+        }
+
+        res.json(enrollment);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get enrollments for a course
+// @route   GET /api/enrollments/course/:id
+// @access  Private/Faculty/Admin
+const getCourseEnrollments = async (req, res, next) => {
+    try {
+        const enrollments = await Enrollment.find({ course: req.params.id }).populate('student', 'name email');
+        res.json(enrollments);
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { enrollInCourse, getMyEnrollments, getCourseEnrollments, updateProgress };
