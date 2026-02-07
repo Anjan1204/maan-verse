@@ -21,16 +21,17 @@ app.use(express.json());
 const allowedOrigins = [
     process.env.CLIENT_URL,
     'http://localhost:5173',
-    'https://your-netlify-app.netlify.app' // User should replace this
+    'https://maan-verse.netlify.app' // Explicit production origin
 ].filter(origin => origin); // Remove undefined/null
 
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+        if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
             callback(null, true);
         } else {
+            console.warn(`Origin ${origin} not allowed by CORS`);
             callback(new Error('Not allowed by CORS'));
         }
     },

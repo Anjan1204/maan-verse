@@ -14,7 +14,9 @@ export const SocketProvider = ({ children }) => {
             console.warn('VITE_API_URL is not defined. Socket.io might not connect.');
             return;
         }
-        const newSocket = io(socketUrl);
+        const newSocket = io(socketUrl, {
+            withCredentials: true
+        });
         setSocket(newSocket);
 
         return () => newSocket.close();
