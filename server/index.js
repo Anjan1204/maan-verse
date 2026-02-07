@@ -1,0 +1,94 @@
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const path = require('path');
+const connectDB = require('./config/db');
+
+// Load environment variables
+dotenv.config();
+
+// Connect to MongoDB
+connectDB();
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+
+// CORS configuration for production
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    'http://localhost:5173',
+    'https://your-netlify-app.netlify.app' // User should replace this
+].filter(origin => origin); // Remove undefined/null
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+    optionsSuccessStatus: 200
+}));
+
+app.use(helmet({
+    crossOriginResourcePolicy: false, // For local image serving
+}));
+app.use(morgan('dev'));
+
+// Static folder for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Routes
+app.get('/', (req, res) => {
+    res.json({ message: 'MAAN-verse API is running...' });
+});
+
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/student', require('./routes/studentRoutes'));
+app.use('/api/faculty', require('./routes/facultyRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/courses', require('./routes/courseRoutes'));
+app.use('/api/enrollments', require('./routes/enrollmentRoutes'));
+app.use('/api/payment', require('./routes/paymentRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/inquiries', require('./routes/inquiryRoutes'));
+app.use('/api/notices', require('./routes/noticeRoutes'));
+
+// Error Handler
+const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+app.use(notFound);
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 5000;
+
+const server = app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    console.log('Server running');
+});
+
+// Socket.io configuration
+const io = require('socket.io')(server, {
+    cors: {
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+    console.log('Client connected: ' + socket.id);
+    socket.on('disconnect', () => {
+        console.log('Client disconnected');
+    });
+});

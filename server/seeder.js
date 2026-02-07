@@ -55,6 +55,15 @@ const importData = async () => {
         const courses = [];
         const categories = ['Development', 'Business', 'Design', 'Marketing', 'Photography', 'Music'];
 
+        const categoryImages = {
+            'Development': 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80',
+            'Business': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+            'Design': 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=800&q=80',
+            'Marketing': 'https://images.unsplash.com/photo-1533750349088-cd871a92f312?auto=format&fit=crop&w=800&q=80',
+            'Photography': 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=800&q=80',
+            'Music': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80'
+        };
+
         for (let i = 1; i <= 55; i++) {
             const isFaculty1 = i % 2 === 0;
             const category = categories[Math.floor(Math.random() * categories.length)];
@@ -63,7 +72,7 @@ const importData = async () => {
                 description: `This is a comprehensive course about ${category}. Learn from the best sources and master the skills required for ${category}. Index: ${i}`,
                 category: category,
                 faculty: isFaculty1 ? faculty1 : faculty2,
-                thumbnail: `https://via.placeholder.com/640x360.png?text=Course+${i}`, // Placeholder image
+                thumbnail: categoryImages[category] || `https://via.placeholder.com/640x360.png?text=Course+${i}`,
                 price: Math.floor(Math.random() * 100) + 10,
                 isPublished: true,
                 chapters: [
