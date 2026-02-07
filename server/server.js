@@ -18,7 +18,11 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
 app.use(helmet());
 app.use(morgan('dev'));
 
@@ -63,7 +67,7 @@ const server = app.listen(PORT, () => {
 // Implementation of Socket.io
 const io = require('socket.io')(server, {
     cors: {
-        origin: "http://localhost:5173", // Allow client
+        origin: process.env.CLIENT_URL || "http://localhost:5173", // Allow client
         methods: ["GET", "POST"]
     }
 });
