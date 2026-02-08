@@ -70,7 +70,7 @@ const ContactPage = () => {
                                         </div>
                                         <div>
                                             <h4 className="text-lg font-semibold text-white">Email Us</h4>
-                                            <p className="text-gray-400">anjan.patna24@gmail.com</p>
+                                            <p className="text-gray-400">maanverse85@gmail.com</p>
                                             <p className="text-gray-500 text-sm">Response within 24 hours</p>
                                         </div>
                                     </div>
