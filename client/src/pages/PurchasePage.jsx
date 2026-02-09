@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Mail, Lock, CheckCircle, ArrowLeft, Loader2, QrCode, Smartphone } from 'lucide-react';
+import { CreditCard, Mail, Lock, CheckCircle, ArrowLeft, Loader2, QrCode, Smartphone, Clock } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -163,239 +163,261 @@ const PurchasePage = () => {
                     Back to Courses
                 </button>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    {/* Course Summary */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    {/* Left Column: Course Details */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="space-y-6"
+                        className="lg:col-span-2 space-y-10"
                     >
-                        <h2 className="text-3xl font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Order Summary</h2>
-                        <div className="glass rounded-3xl overflow-hidden border border-white/10 shadow-2xl group hover:border-primary/30 transition-all duration-500">
-                            <div className="relative overflow-hidden">
-                                <img
-                                    src={course.thumbnail}
-                                    alt={course.title}
-                                    className="w-full aspect-video object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-dark/80 to-transparent" />
-                            </div>
-                            <div className="p-8">
-                                <h3 className="text-2xl font-bold mb-3">{course.title}</h3>
-                                <div className="flex items-center gap-3 text-gray-400 mb-6">
-                                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shadow-inner">
-                                        {course.faculty?.name?.[0] || 'F'}
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-widest font-semibold">Instructor</p>
-                                        <span className="text-sm font-medium text-gray-300">{course.faculty?.name || 'Instructor'}</span>
-                                    </div>
+                        <div className="space-y-6">
+                            <h1 className="text-4xl sm:text-5xl font-black tracking-tight">{course.title}</h1>
+                            <p className="text-xl text-gray-400 max-w-2xl leading-relaxed">{course.description}</p>
+
+                            <div className="flex flex-wrap gap-4 pt-2">
+                                <div className="px-4 py-2 glass rounded-full flex items-center gap-2 border border-primary/20 bg-primary/5">
+                                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                    <span className="text-sm font-bold text-gray-200">{course.level || 'Beginner'}</span>
                                 </div>
-                                <div className="space-y-3 py-6 border-y border-white/5">
-                                    <div className="flex justify-between text-gray-400">
-                                        <span>Course Price</span>
-                                        <span>${course.price}</span>
-                                    </div>
-                                    <div className="flex justify-between text-gray-400">
-                                        <span>Service Fee</span>
-                                        <span className="text-green-400">FREE</span>
-                                    </div>
+                                <div className="px-4 py-2 glass rounded-full flex items-center gap-2 border border-secondary/20 bg-secondary/5">
+                                    <Clock size={16} className="text-secondary" />
+                                    <span className="text-sm font-bold text-gray-200">{course.duration || 'Self-paced'}</span>
                                 </div>
-                                <div className="flex justify-between items-center pt-6">
-                                    <span className="text-lg font-bold">Total Amount</span>
-                                    <span className="text-3xl font-black text-secondary">${course.price}</span>
+                                <div className="px-4 py-2 glass rounded-full flex items-center gap-2 border border-white/10">
+                                    <CheckCircle size={16} className="text-green-400" />
+                                    <span className="text-sm font-bold text-gray-200">{course.enrolledCount || 0} Students</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="p-6 glass rounded-2xl border border-white/10 hover:border-green-500/30 transition-colors group">
-                                <div className="p-3 bg-green-500/20 rounded-xl w-fit mb-4 group-hover:bg-green-500/30 transition-colors">
-                                    <CheckCircle size={24} className="text-green-400" />
-                                </div>
-                                <h4 className="font-bold mb-1">Lifetime Access</h4>
-                                <p className="text-sm text-gray-400">Learn at your own pace with forever access.</p>
+                        {/* What you'll learn */}
+                        <div className="glass p-8 rounded-[2rem] border border-white/5 bg-white/[0.02]">
+                            <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                                <span className="p-2 bg-primary/20 rounded-lg"><CheckCircle size={20} className="text-primary" /></span>
+                                What you'll learn
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {course.learningOutcomes?.map((outcome, idx) => (
+                                    <div key={idx} className="flex gap-3 text-gray-300">
+                                        <CheckCircle size={18} className="text-green-500 shrink-0 mt-1" />
+                                        <span className="text-sm leading-relaxed">{outcome}</span>
+                                    </div>
+                                )) || <p className="text-gray-500 italic">No specific outcomes listed.</p>}
                             </div>
-                            <div className="p-6 glass rounded-2xl border border-white/10 hover:border-blue-500/30 transition-colors group">
-                                <div className="p-3 bg-blue-500/20 rounded-xl w-fit mb-4 group-hover:bg-blue-500/30 transition-colors">
-                                    <CheckCircle size={24} className="text-blue-400" />
-                                </div>
-                                <h4 className="font-bold mb-1">Certificate</h4>
-                                <p className="text-sm text-gray-400">Get recognized for your hard work.</p>
+                        </div>
+
+                        {/* Curriculum */}
+                        <div className="space-y-6">
+                            <h3 className="text-2xl font-bold flex items-center gap-3">
+                                <span className="p-2 bg-secondary/20 rounded-lg"><Lock size={20} className="text-secondary" /></span>
+                                Course Content
+                            </h3>
+                            <div className="space-y-3">
+                                {course.chapters?.map((chapter, idx) => (
+                                    <div key={idx} className="glass p-5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors flex items-center justify-between group">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-bold text-gray-400 group-hover:text-white transition-colors">
+                                                {idx + 1}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-gray-200">{chapter.title}</h4>
+                                                <p className="text-xs text-gray-500 flex items-center gap-2">
+                                                    {chapter.isFree ? <span className="text-green-400">Preview Available</span> : <span>Locked Content</span>}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {chapter.isFree ? (
+                                            <button className="text-xs font-bold text-primary hover:text-white transition-colors uppercase tracking-widest">Preview</button>
+                                        ) : (
+                                            <Lock size={16} className="text-gray-600" />
+                                        )}
+                                    </div>
+                                ))}
                             </div>
+                        </div>
+
+                        {/* Requirements */}
+                        <div className="glass p-8 rounded-[2rem] border border-white/5">
+                            <h3 className="text-2xl font-bold mb-6">Requirements</h3>
+                            <ul className="space-y-3">
+                                {course.requirements?.map((req, idx) => (
+                                    <li key={idx} className="flex gap-3 text-gray-400">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-gray-600 mt-2 shrink-0" />
+                                        <span className="text-sm">{req}</span>
+                                    </li>
+                                )) || <li className="text-gray-500 italic">No specific requirements listed.</li>}
+                            </ul>
                         </div>
                     </motion.div>
 
-                    {/* Payment Form */}
-                    <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                    >
-                        <div className="glass p-8 rounded-[2rem] border border-white/10 shadow-2xl space-y-8 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[100px] pointer-events-none" />
-                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 blur-[100px] pointer-events-none" />
+                    {/* Right Column: Checkout Sticky */}
+                    <div className="lg:col-span-1">
+                        <div className="sticky top-32 space-y-6">
+                            {/* Enrollment Card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="glass p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[60px] pointer-events-none" />
 
-                            <div className="space-y-2">
-                                <h2 className="text-2xl font-bold">Secure Checkout</h2>
-                                <p className="text-gray-400 text-sm">Choose your preferred payment method</p>
-                            </div>
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end">
+                                        <span className="text-gray-400 font-bold">Course Price</span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-gray-500 line-through text-sm">${course.price * 2}</span>
+                                            <span className="text-4xl font-black text-secondary">${course.price}</span>
+                                        </div>
+                                    </div>
 
-                            {/* Payment Method Toggle */}
-                            <div className="flex p-1 bg-white/5 rounded-2xl border border-white/10 relative z-10">
-                                <button
-                                    onClick={() => setPaymentMethod('card')}
-                                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${paymentMethod === 'card' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-white'}`}
-                                >
-                                    <CreditCard size={18} />
-                                    Credit/Debit Card
-                                </button>
-                                <button
-                                    onClick={() => setPaymentMethod('upi')}
-                                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${paymentMethod === 'upi' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-white'}`}
-                                >
-                                    <QrCode size={18} />
-                                    UPI Payment
-                                </button>
-                            </div>
+                                    <div className="p-4 bg-green-500/10 rounded-2xl border border-green-500/20">
+                                        <p className="text-xs text-green-400 font-bold flex items-center gap-2">
+                                            <CheckCircle size={14} /> 50% Early Bird Discount Applied!
+                                        </p>
+                                    </div>
 
-                            <form onSubmit={handlePurchase} className="space-y-6 relative z-10">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-400 px-1">Email Address</label>
-                                    <div className="relative group">
-                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors" size={20} />
+                                    <div className="space-y-4 pt-4 border-t border-white/5">
+                                        <div className="flex items-center gap-3 text-gray-300">
+                                            <CheckCircle size={18} className="text-primary" />
+                                            <span className="text-sm">Lifetime Access</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-gray-300">
+                                            <CheckCircle size={18} className="text-primary" />
+                                            <span className="text-sm">Verified Certificate</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-gray-300">
+                                            <CheckCircle size={18} className="text-primary" />
+                                            <span className="text-sm">Instructor Support</span>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => {
+                                            const element = document.getElementById('checkout-anchor');
+                                            element?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="w-full py-4 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        Enroll Now
+                                    </button>
+                                </div>
+                            </motion.div>
+
+                            {/* Secure Payment Form Anchor */}
+                            <div id="checkout-anchor" />
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="glass p-8 rounded-[2.5rem] border border-white/10 shadow-2xl space-y-6"
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-bold">Checkout</h2>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setPaymentMethod('card')}
+                                            className={`p-2 rounded-lg transition-colors ${paymentMethod === 'card' ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+                                        >
+                                            <CreditCard size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setPaymentMethod('upi')}
+                                            className={`p-2 rounded-lg transition-colors ${paymentMethod === 'upi' ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+                                        >
+                                            <QrCode size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <form onSubmit={handlePurchase} className="space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Email</label>
                                         <input
                                             type="email"
                                             required
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="jane.doe@example.com"
-                                            className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-primary transition-all"
+                                            placeholder="jane@doe.com"
                                         />
                                     </div>
-                                    {errors.email && <p className="text-red-400 text-xs px-1">{errors.email}</p>}
-                                </div>
 
-                                <AnimatePresence mode="wait">
                                     {paymentMethod === 'card' ? (
-                                        <motion.div
-                                            key="card-payment"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="space-y-5"
-                                        >
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-gray-400 px-1">Card Holder Name</label>
+                                        <div className="space-y-4">
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Card Number</label>
+                                                <input
+                                                    type="text"
+                                                    name="number"
+                                                    value={cardData.number}
+                                                    onChange={handleCardChange}
+                                                    className={`w-full px-4 py-3 bg-white/5 border ${errors.number ? 'border-red-500' : 'border-white/10'} rounded-xl text-sm focus:outline-none focus:border-primary transition-all`}
+                                                    placeholder="0000 0000 0000 0000"
+                                                />
+                                                {errors.number && <p className="text-xs text-red-500 px-1">{errors.number}</p>}
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Name on Card</label>
                                                 <input
                                                     type="text"
                                                     name="name"
                                                     value={cardData.name}
                                                     onChange={handleCardChange}
-                                                    required
-                                                    placeholder="JANE DOE"
-                                                    className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all uppercase"
+                                                    className={`w-full px-4 py-3 bg-white/5 border ${errors.name ? 'border-red-500' : 'border-white/10'} rounded-xl text-sm focus:outline-none focus:border-primary transition-all`}
+                                                    placeholder="John Doe"
                                                 />
-                                                {errors.name && <p className="text-red-400 text-xs px-1">{errors.name}</p>}
+                                                {errors.name && <p className="text-xs text-red-500 px-1">{errors.name}</p>}
                                             </div>
-
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-bold text-gray-400 px-1">Card Number</label>
-                                                <div className="relative group">
-                                                    <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors" size={20} />
-                                                    <input
-                                                        type="text"
-                                                        name="number"
-                                                        value={cardData.number}
-                                                        onChange={handleCardChange}
-                                                        required
-                                                        placeholder="0000 0000 0000 0000"
-                                                        className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
-                                                    />
-                                                </div>
-                                                {errors.number && <p className="text-red-400 text-xs px-1">{errors.number}</p>}
-                                            </div>
-
                                             <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-bold text-gray-400 px-1">Expiry Date</label>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Expiry</label>
                                                     <input
                                                         type="text"
                                                         name="expiry"
                                                         value={cardData.expiry}
                                                         onChange={handleCardChange}
-                                                        required
+                                                        className={`w-full px-4 py-3 bg-white/5 border ${errors.expiry ? 'border-red-500' : 'border-white/10'} rounded-xl text-sm focus:outline-none focus:border-primary transition-all`}
                                                         placeholder="MM/YY"
-                                                        className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-center"
                                                     />
-                                                    {errors.expiry && <p className="text-red-400 text-xs px-1">{errors.expiry}</p>}
+                                                    {errors.expiry && <p className="text-xs text-red-500 px-1">{errors.expiry}</p>}
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-bold text-gray-400 px-1">CVV</label>
-                                                    <div className="relative">
-                                                        <input
-                                                            type="password"
-                                                            name="cvv"
-                                                            value={cardData.cvv}
-                                                            onChange={handleCardChange}
-                                                            required
-                                                            placeholder="***"
-                                                            className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-center"
-                                                        />
-                                                        <Lock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
-                                                    </div>
-                                                    {errors.cvv && <p className="text-red-400 text-xs px-1">{errors.cvv}</p>}
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">CVV</label>
+                                                    <input
+                                                        type="password"
+                                                        name="cvv"
+                                                        value={cardData.cvv}
+                                                        onChange={handleCardChange}
+                                                        className={`w-full px-4 py-3 bg-white/5 border ${errors.cvv ? 'border-red-500' : 'border-white/10'} rounded-xl text-sm focus:outline-none focus:border-primary transition-all`}
+                                                        placeholder="***"
+                                                    />
+                                                    {errors.cvv && <p className="text-xs text-red-500 px-1">{errors.cvv}</p>}
                                                 </div>
                                             </div>
-                                        </motion.div>
+                                        </div>
                                     ) : (
-                                        <motion.div
-                                            key="upi-payment"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="space-y-6 flex flex-col items-center"
-                                        >
-                                            <div className="p-6 bg-white rounded-[2.5rem] shadow-[0_0_50px_rgba(255,255,255,0.1)] group relative">
-                                                <div className="absolute inset-0 bg-primary/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                <img
-                                                    src="/assets/qr.jpeg"
-                                                    alt="UPI QR Code"
-                                                    className="w-56 h-56 object-contain relative z-10"
-                                                />
+                                        <div className="flex flex-col items-center gap-4 py-2">
+                                            <div className="bg-white p-4 rounded-2xl w-40 h-40">
+                                                <img src="/assets/qr.jpeg" alt="QR" className="w-full h-full object-contain" />
                                             </div>
-                                            <div className="text-center space-y-3">
-                                                <div className="flex items-center justify-center gap-3 py-2 px-6 bg-secondary/10 rounded-full text-secondary font-black text-lg">
-                                                    <Smartphone size={24} />
-                                                    <span>Scan & Pay with Any App</span>
-                                                </div>
-                                                <p className="text-gray-500 text-sm max-w-xs mx-auto">Click 'Complete Purchase' after you've successfully scanned and paid via your mobile app.</p>
-                                            </div>
-                                        </motion.div>
+                                            <p className="text-[10px] text-gray-500 text-center">Scan QR and click complete</p>
+                                        </div>
                                     )}
-                                </AnimatePresence>
 
-                                <div className="pt-6">
                                     <button
                                         type="submit"
-                                        className="w-full py-5 bg-gradient-to-r from-primary to-secondary hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] text-white rounded-[1.5rem] font-black text-xl transition-all flex items-center justify-center gap-3 relative overflow-hidden group"
+                                        className="w-full py-4 mt-4 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-black text-sm hover:translate-y-[-2px] transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
                                     >
-                                        <Lock size={22} className="group-hover:scale-110 transition-transform" />
-                                        {paymentMethod === 'card' ? `Pay $${course.price}` : 'Complete Purchase'}
-                                        <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700 skew-x-12" />
+                                        {paymentMethod === 'card' ? `Pay $${course.price}` : 'Complete Enrollment'}
                                     </button>
-                                    <div className="mt-6 flex items-center justify-center gap-6">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-help" title="Visa" />
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-help" title="Mastercard" />
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-4 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-help" title="PayPal" />
-                                    </div>
-                                    <p className="text-center text-xs text-gray-500 mt-6 flex items-center justify-center gap-2">
-                                        <Lock size={12} className="text-green-500" />
-                                        Luma Secure Encryption Standard
-                                    </p>
+                                </form>
+                                <div className="flex items-center justify-center gap-2 pt-2 grayscale opacity-40">
+                                    <Lock size={12} />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Secure Checkout</span>
                                 </div>
-                            </form>
+                            </motion.div>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             </div>
 

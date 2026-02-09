@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { User, Phone, MapPin, Calendar, Mail, Save } from 'lucide-react';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import api from '../../utils/api';
 
 const StudentProfile = () => {
@@ -62,8 +62,9 @@ const StudentProfile = () => {
             });
             setUser(data);
             toast.success('System Records Updated');
-        } catch (error) {
-            toast.error('Data Synchronization Failed');
+        } catch (err) {
+            const message = err.response?.data?.message || 'Data Synchronization Failed';
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -71,7 +72,6 @@ const StudentProfile = () => {
 
     return (
         <div className="max-w-5xl mx-auto space-y-10 pb-10">
-            <ToastContainer theme="dark" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -10,46 +10,16 @@ import {
 import api from '../../utils/api';
 import { toast } from 'react-toastify';
 
-const QuizComponent = ({ topic, category, onComplete }) => {
+const QuizComponent = ({ topic, topicQuestions, onComplete }) => {
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
     const [showResult, setShowResult] = useState(false);
     const [score, setScore] = useState(0);
 
-    // Dynamic Question Generator based on Subject/Category
-    const getQuestions = () => {
-        const defaultPool = [
-            { q: `What is the core objective of ${topic}?`, options: ['Optimization', 'Redundancy', 'Simplification', 'Complexity'], correct: 0 },
-            { q: `Which tool is most commonly used in ${category}?`, options: ['Frameworks', 'Static Analysis', 'Manual Testing', 'Spreadsheets'], correct: 0 },
-            { q: `When was the major breakthrough in ${topic} recorded?`, options: ['Early 2000s', 'The 90s', 'Last 5 years', 'It is a new concept'], correct: 2 },
-            { q: `Identify the primary bottleneck in ${topic} implementation.`, options: ['Hardware limitation', 'Scalability', 'User adoption', 'Cost'], correct: 1 },
-            { q: `What is a prerequisite for mastering ${topic}?`, options: ['Basic Logic', 'Advanced Math', 'Subject Expertise', 'All of the above'], correct: 3 }
-        ];
-
-        const logicPool = {
-            'Computer Science': [
-                { q: 'What is the time complexity of a binary search?', options: ['O(n)', 'O(log n)', 'O(n^2)', 'O(1)'], correct: 1 },
-                { q: 'Which data structure follows LIFO?', options: ['Queue', 'Stack', 'Tree', 'Graph'], correct: 1 },
-                { q: 'What does HTTP stand for?', options: ['HyperText Transfer Protocol', 'High Tech Transfer Power', 'Hyperlink Text Tool', 'Home Transfer Text Pro'], correct: 0 },
-                { q: 'Which language is primarily used for Android?', options: ['Swift', 'Kotlin', 'PHP', 'C#'], correct: 1 },
-                { q: 'The term "Cloud Computing" refers to?', options: ['Rain systems', 'Remote servers', 'Local storage', 'Weather apps'], correct: 1 }
-            ],
-            'Web Development': [
-                { q: 'Which tag is used for external CSS?', options: ['<script>', '<link>', '<style>', '<meta>'], correct: 1 },
-                { q: 'What is the current version of HTML?', options: ['HTML4', 'HTML6', 'HTML5', 'XHTML'], correct: 2 },
-                { q: 'What does CSS stand for?', options: ['Creative Style Sheets', 'Cascading Style Sheets', 'Computer Style Sizing', 'Color Style System'], correct: 1 },
-                { q: 'Which property is used for text alignment?', options: ['font-style', 'text-align', 'align-content', 'grid-align'], correct: 1 },
-                { q: 'React is a library for?', options: ['Backend', 'Database', 'Mobile', 'User Interface'], correct: 3 }
-            ]
-        };
-
-        return logicPool[category] || defaultPool;
-    };
-
-    const questions = getQuestions();
+    const questions = topicQuestions || [];
 
     const handleNext = () => {
-        if (selectedOption === questions[currentQuestion].correct) {
+        if (selectedOption === (questions[currentQuestion].correctAnswer ?? questions[currentQuestion].correct)) {
             setScore(score + 1);
         }
 
@@ -113,7 +83,7 @@ const QuizComponent = ({ topic, category, onComplete }) => {
 
             <div className="glass p-10 rounded-[3rem] border border-white/5 space-y-10 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/10 transition-colors" />
-                <h3 className="text-2xl font-black leading-tight relative z-10">{questions[currentQuestion].q}</h3>
+                <h3 className="text-2xl font-black leading-tight relative z-10">{questions[currentQuestion].q || questions[currentQuestion].question}</h3>
                 <div className="grid gap-4 relative z-10">
                     {questions[currentQuestion].options.map((option, i) => (
                         <button
@@ -161,7 +131,7 @@ const CourseContentPage = () => {
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [courseRes, enrollmentRes] = await Promise.all([
                 api.get(`/courses/${courseId}`),
@@ -182,11 +152,11 @@ const CourseContentPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [courseId, navigate]);
 
     useEffect(() => {
         fetchData();
-    }, [courseId, navigate]);
+    }, [courseId, navigate, fetchData]);
 
     const handleProgressUpdate = async () => {
         if (!activeChapter || !courseId) return;
@@ -430,8 +400,11 @@ const CourseContentPage = () => {
                                                         </p>
                                                     </div>
                                                     <div className="hidden md:flex flex-col items-end gap-2">
-                                                        <div className="p-5 bg-white/5 rounded-3xl border border-white/10 shadow-2xl">
-                                                            <Download size={32} className="text-white hover:text-primary cursor-pointer transition-colors" />
+                                                        <div
+                                                            onClick={() => activeChapter.pdfUrl && window.open(activeChapter.pdfUrl, '_blank')}
+                                                            className="p-5 bg-white/5 rounded-3xl border border-white/10 shadow-2xl group/download cursor-pointer"
+                                                        >
+                                                            <Download size={32} className="text-white group-hover:text-primary transition-colors" />
                                                         </div>
                                                         <span className="text-[10px] font-black text-gray-600 uppercase">2.4 MB (PDF)</span>
                                                     </div>
@@ -483,7 +456,10 @@ const CourseContentPage = () => {
                                                             </div>
                                                         </div>
                                                         <div className="flex gap-4">
-                                                            <button className="flex-1 py-5 bg-white text-black rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-opacity-90 transition-all flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => activeChapter.pdfUrl && window.open(activeChapter.pdfUrl, '_blank')}
+                                                                className="flex-1 py-5 bg-white text-black rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-opacity-90 transition-all flex items-center justify-center gap-2"
+                                                            >
                                                                 <Eye size={18} /> Review Material
                                                             </button>
                                                             <button
@@ -504,6 +480,7 @@ const CourseContentPage = () => {
                                     <QuizComponent
                                         topic={activeChapter.title}
                                         category={course.category}
+                                        topicQuestions={activeChapter.quiz}
                                         onComplete={handleProgressUpdate}
                                     />
                                 )}

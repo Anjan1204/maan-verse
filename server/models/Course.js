@@ -5,6 +5,11 @@ const chapterSchema = mongoose.Schema({
     videoUrl: { type: String }, // Path or URL to video
     pdfUrl: { type: String },   // Path or URL to PDF
     isFree: { type: Boolean, default: false },
+    quiz: [{
+        question: { type: String, required: true },
+        options: [{ type: String, required: true }],
+        correctAnswer: { type: Number, required: true }, // Index of the correct option
+    }],
 });
 
 const courseSchema = mongoose.Schema({
@@ -39,6 +44,21 @@ const courseSchema = mongoose.Schema({
         default: false,
     },
     chapters: [chapterSchema],
+    level: {
+        type: String,
+        enum: ['Beginner', 'Intermediate', 'Advanced', 'All Levels'],
+        default: 'Beginner'
+    },
+    duration: {
+        type: String,
+        default: 'Self-paced'
+    },
+    learningOutcomes: [{
+        type: String
+    }],
+    requirements: [{
+        type: String
+    }],
     enrolledCount: {
         type: Number,
         default: 0,

@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 
 const StudentTimetable = () => {
     const [timetable, setTimetable] = useState([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchTimetable = async () => {
@@ -14,8 +13,6 @@ const StudentTimetable = () => {
                 setTimetable(data);
             } catch (error) {
                 console.error(error);
-            } finally {
-                setLoading(false);
             }
         };
         fetchTimetable();

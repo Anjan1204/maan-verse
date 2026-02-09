@@ -32,70 +32,84 @@ const getUserProfile = async (req, res, next) => {
 // @route   PUT /api/users/profile
 // @access  Private
 const updateUserProfile = async (req, res, next) => {
-    console.log('DEBUG: updateUserProfile called with body:', JSON.stringify(req.body, null, 2));
     try {
         const user = await User.findById(req.user._id);
 
-        if (user) {
-            user.name = req.body.name || user.name;
-            user.email = req.body.email || user.email;
-
-            if (req.body.profile) {
-                if (!user.profile) user.profile = {};
-                if (req.body.profile.avatar) user.profile.avatar = req.body.profile.avatar;
-                if (req.body.profile.bio) user.profile.bio = req.body.profile.bio;
-            }
-
-            if (user.role === 'student' && req.body.studentProfile) {
-                // Safely update student profile fields
-                if (!user.studentProfile) user.studentProfile = {};
-
-                const sp = req.body.studentProfile;
-                if (sp.phone) user.studentProfile.phone = sp.phone;
-                if (sp.address) user.studentProfile.address = sp.address;
-                if (sp.rollNo) user.studentProfile.rollNo = sp.rollNo;
-                if (sp.branch) user.studentProfile.branch = sp.branch;
-                if (sp.semester) user.studentProfile.semester = sp.semester;
-
-                if (sp.dob) {
-                    const dobDate = new Date(sp.dob);
-                    if (!isNaN(dobDate.getTime())) {
-                        user.studentProfile.dob = dobDate;
-                    } else {
-                        console.warn('DEBUG: Invalid date received:', sp.dob);
-                    }
-                }
-            } else if (user.role === 'faculty' && req.body.facultyProfile) {
-                if (!user.facultyProfile) user.facultyProfile = {};
-                Object.assign(user.facultyProfile, req.body.facultyProfile);
-            }
-
-            if (req.body.password) {
-                user.password = req.body.password;
-            }
-
-            console.log('DEBUG: Attempting to save user...');
-            const updatedUser = await user.save();
-            console.log('DEBUG: User saved successfully');
-
-            res.json({
-                _id: updatedUser._id,
-                name: updatedUser.name,
-                email: updatedUser.email,
-                role: updatedUser.role,
-                profile: updatedUser.profile,
-                studentProfile: updatedUser.studentProfile,
-                facultyProfile: updatedUser.facultyProfile,
-                attendance: updatedUser.attendance,
-                isActive: updatedUser.isActive
-            });
-        } else {
+        if (!user) {
             res.status(404);
             throw new Error('User not found');
         }
+
+        // Basic fields
+        user.name = req.body.name || user.name;
+
+        // Handle Email (unique check)
+        if (req.body.email && req.body.email !== user.email) {
+            const emailExists = await User.findOne({ email: req.body.email });
+            if (emailExists) {
+                res.status(400);
+                throw new Error('Email address already in use');
+            }
+            user.email = req.body.email;
+        }
+
+        // Update basic profile (avatar, bio)
+        if (req.body.profile) {
+            if (!user.profile) user.profile = {};
+            if (req.body.profile.avatar !== undefined) user.profile.avatar = req.body.profile.avatar;
+            if (req.body.profile.bio !== undefined) user.profile.bio = req.body.profile.bio;
+        }
+
+        // Update role-specific profile
+        if (user.role === 'student' && req.body.studentProfile) {
+            if (!user.studentProfile) user.studentProfile = {};
+
+            const sp = req.body.studentProfile;
+            // Explicitly update fields to allow clearing (empty strings)
+            if (sp.phone !== undefined) user.studentProfile.phone = sp.phone;
+            if (sp.address !== undefined) user.studentProfile.address = sp.address;
+            if (sp.rollNo !== undefined) user.studentProfile.rollNo = sp.rollNo;
+            if (sp.branch !== undefined) user.studentProfile.branch = sp.branch;
+            if (sp.semester !== undefined) user.studentProfile.semester = sp.semester;
+
+            if (sp.dob) {
+                const dobDate = new Date(sp.dob);
+                if (!isNaN(dobDate.getTime())) {
+                    user.studentProfile.dob = dobDate;
+                }
+            } else if (sp.dob === '') {
+                user.studentProfile.dob = null;
+            }
+        } else if (user.role === 'faculty' && req.body.facultyProfile) {
+            if (!user.facultyProfile) user.facultyProfile = {};
+            // For faculty, merge existing fields
+            Object.assign(user.facultyProfile, req.body.facultyProfile);
+        }
+
+        if (req.body.password) {
+            user.password = req.body.password;
+        }
+
+        const updatedUser = await user.save();
+
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            profile: updatedUser.profile,
+            studentProfile: updatedUser.studentProfile,
+            facultyProfile: updatedUser.facultyProfile,
+            attendance: updatedUser.attendance,
+            isActive: updatedUser.isActive
+        });
     } catch (error) {
-        console.error('DEBUG: updateUserProfile error:', error);
-        next(error);
+        console.error('ERROR in updateUserProfile:', error);
+        const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+        res.status(statusCode).json({
+            message: error.message || 'Data Synchronization Failed',
+            stack: process.env.NODE_ENV === 'production' ? null : error.stack
+        });
     }
 };
 

@@ -14,9 +14,15 @@ const LoginPage = () => {
         e.preventDefault();
         try {
             const user = await login(email, password);
-            if (user.role === 'admin') navigate('/admin/dashboard');
-            else if (user.role === 'faculty') navigate('/faculty/dashboard');
-            else navigate('/student/dashboard');
+            if (user.role === 'admin') {
+                navigate('/admin/dashboard');
+            } else if (user.role === 'faculty') {
+                navigate('/faculty/dashboard');
+            } else if (user.role === 'student') {
+                navigate('/student/dashboard');
+            } else {
+                setError('Unknown user role. Please contact support.');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
         }

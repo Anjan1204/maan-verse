@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSocket } from '../../context/SocketContext';
 import api from '../../utils/api';
 import {
@@ -12,7 +11,6 @@ import {
 } from 'recharts';
 
 const StudentDashboard = () => {
-    const { user } = useAuth();
     const navigate = useNavigate();
     const socket = useSocket();
     const [dashboardData, setDashboardData] = useState(null);
@@ -23,7 +21,7 @@ const StudentDashboard = () => {
     // DEBUG LOGGING
     console.log('StudentDashboard Render:', { loading, error, dashboardData, availableCourses });
 
-    const fetchDashboard = async () => {
+    const fetchDashboard = useCallback(async () => {
         try {
             console.log('Fetching Dashboard Data...');
             setLoading(true);
@@ -37,9 +35,9 @@ const StudentDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const fetchCourses = async () => {
+    const fetchCourses = useCallback(async () => {
         try {
             console.log('Fetching Courses...');
             const { data } = await api.get('/courses');
@@ -52,17 +50,17 @@ const StudentDashboard = () => {
             console.error('Failed to fetch courses', err);
             // Don't block dashboard if courses fail
         }
-    };
+    }, [dashboardData]);
 
     useEffect(() => {
         fetchDashboard();
-    }, []);
+    }, [fetchDashboard]);
 
     useEffect(() => {
         if (dashboardData) {
             fetchCourses();
         }
-    }, [dashboardData]);
+    }, [dashboardData, fetchCourses]);
 
     useEffect(() => {
         if (socket) {
