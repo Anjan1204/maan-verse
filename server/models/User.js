@@ -20,6 +20,14 @@ const userSchema = mongoose.Schema({
         enum: ['admin', 'faculty', 'student'],
         default: 'student',
     },
+    isApproved: {
+        type: Boolean,
+        default: true, // Default to true for students/faculty, handled in controller for admins
+    },
+    isMainAdmin: {
+        type: Boolean,
+        default: false,
+    },
     profile: {
         bio: String,
         avatar: String,

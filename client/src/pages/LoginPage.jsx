@@ -1,32 +1,107 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { motion } from 'framer-motion';
+import { Loader } from 'lucide-react';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [waitingForApproval, setWaitingForApproval] = useState(false);
     const { login } = useAuth();
+    const socket = useSocket();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
         try {
-            const user = await login(email, password);
-            if (user.role === 'admin') {
-                navigate('/admin/dashboard');
-            } else if (user.role === 'faculty') {
-                navigate('/faculty/dashboard');
-            } else if (user.role === 'student') {
-                navigate('/student/dashboard');
+            const response = await login(email, password);
+
+            if (response.requireApproval) {
+                setWaitingForApproval(true);
+                if (socket) {
+                    socket.emit('login:wait', response.requestId);
+                }
             } else {
-                setError('Unknown user role. Please contact support.');
+                handleLoginSuccess(response);
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
+            setWaitingForApproval(false);
         }
     };
+
+    const handleLoginSuccess = (user) => {
+        if (user.role === 'admin') {
+            navigate('/admin/dashboard');
+        } else if (user.role === 'faculty') {
+            navigate('/faculty/dashboard');
+        } else if (user.role === 'student') {
+            navigate('/student/dashboard');
+        } else {
+            setError('Unknown user role. Please contact support.');
+        }
+    };
+
+    useEffect(() => {
+        if (socket && waitingForApproval) {
+            const handleLoginResult = (data) => {
+                if (data.success) {
+                    // Manually set user in local storage and context is tricky here 
+                    // because `login` usually does it. 
+                    // We need to re-use the AuthContext's mechanism or manually update it.
+                    // For now, let's assume `login` returned the user object on direct success
+                    // but here we get { success: true, token, user }.
+                    // We need to update localStorage and redirect.
+                    localStorage.setItem('userInfo', JSON.stringify({ ...data.user, token: data.token }));
+                    // Force a reload or update context? 
+                    // Simpler to just redirect and let AuthProvider read from LS on mount? 
+                    // No, AuthProvider listens to LS only on mount.
+                    // We should probably reload the page to pick up the new user state or use a method from AuthContext.
+                    // Since we can't easily access `setUser` from here without exposing it, 
+                    // a full reload is a safe fallback, or we can assume AuthProvider will pick it up if we navigate.
+                    // Actually, navigate won't trigger a re-mount of AuthProvider.
+                    // Let's do a window.location.href to force reload/redirect.
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    setWaitingForApproval(false);
+                    setError(data.message || 'Login rejected');
+                }
+            };
+
+            socket.on('login:result', handleLoginResult);
+
+            return () => {
+                socket.off('login:result', handleLoginResult);
+            };
+        }
+    }, [socket, waitingForApproval]);
+
+    if (waitingForApproval) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-dark">
+                <div className="glass p-8 rounded-2xl flex flex-col items-center max-w-sm w-full text-center">
+                    <div className="w-16 h-16 relative">
+                        <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+                        <Loader className="w-16 h-16 text-primary animate-spin" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mt-6">Waiting for Approval</h3>
+                    <p className="text-gray-400 mt-2">
+                        An existing admin has been notified. Please wait for them to approve this session.
+                    </p>
+                    <button
+                        onClick={() => setWaitingForApproval(false)}
+                        className="mt-6 text-sm text-red-400 hover:text-red-300 font-medium"
+                    >
+                        Cancel Request
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen pt-20 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-dark relative overflow-hidden">

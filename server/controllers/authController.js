@@ -4,6 +4,12 @@ const generateToken = require('../utils/generateToken');
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
 // @access  Public
+const crypto = require('crypto');
+const loginRequests = require('../utils/loginRequests');
+
+// @desc    Auth user & get token
+// @route   POST /api/auth/login
+// @access  Public
 const authUser = async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -11,6 +17,16 @@ const authUser = async (req, res, next) => {
         const user = await User.findOne({ email });
 
         if (user && (await user.matchPassword(password))) {
+            // Check if user is admin
+            // Check if user is admin
+            if (user.role === 'admin') {
+                if (!user.isApproved) {
+                    res.status(403);
+                    throw new Error('Admin approval pending. Please wait for the main admin to approve your account.');
+                }
+            }
+
+            // Normal login (Student/Faculty or First Admin)
             res.json({
                 _id: user._id,
                 name: user.name,
@@ -41,11 +57,26 @@ const registerUser = async (req, res, next) => {
             throw new Error('User already exists');
         }
 
+        let isMainAdmin = false;
+        let isApproved = true; // Default true for non-admins
+
+        if (role === 'admin') {
+            const adminCount = await User.countDocuments({ role: 'admin' });
+            if (adminCount === 0) {
+                isMainAdmin = true;
+                isApproved = true;
+            } else {
+                isApproved = false;
+            }
+        }
+
         const user = await User.create({
             name,
             email,
             password,
-            role: role || 'student', // default to student
+            role: role || 'student',
+            isMainAdmin,
+            isApproved
         });
 
         if (user) {

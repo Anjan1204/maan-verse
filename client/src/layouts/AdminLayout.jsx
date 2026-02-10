@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -13,19 +13,23 @@ import {
     UserCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import NotificationDropdown from '../components/NotificationDropdown';
+import AdminApprovalModal from '../components/AdminApprovalModal';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../utils/api';
 
 const AdminLayout = () => {
     const { logout, user } = useAuth();
+    const socket = useSocket();
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [globalSearch, setGlobalSearch] = useState('');
     const [inquiries, setInquiries] = useState([]);
-    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [approvalRequest, setApprovalRequest] = useState(null);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchInquiries = async () => {
             try {
                 const { data } = await api.get('/inquiries');
@@ -37,6 +41,56 @@ const AdminLayout = () => {
         fetchInquiries();
     }, []);
 
+    // Listen for admin approval requests and handle connection/reconnection
+    useEffect(() => {
+        if (socket) {
+            const joinAdminRoom = () => {
+                socket.emit('admin:join');
+            };
+
+            // Join immediately if connected
+            if (socket.connected) {
+                joinAdminRoom();
+            }
+
+            // Join upon connection (handling initial connect and reconnects)
+            socket.on('connect', joinAdminRoom);
+
+            const handleApprovalRequest = (request) => {
+                setApprovalRequest(request);
+            };
+
+            socket.on('admin:approval_request', handleApprovalRequest);
+
+            return () => {
+                socket.off('connect', joinAdminRoom);
+                socket.off('admin:approval_request', handleApprovalRequest);
+            };
+        }
+    }, [socket]);
+
+    const handleApproveLogin = (requestId) => {
+        if (socket) {
+            socket.emit('admin:response', {
+                requestId,
+                approved: true,
+                adminName: user?.name
+            });
+            setApprovalRequest(null);
+        }
+    };
+
+    const handleRejectLogin = (requestId) => {
+        if (socket) {
+            socket.emit('admin:response', {
+                requestId,
+                approved: false,
+                adminName: user?.name
+            });
+            setApprovalRequest(null);
+        }
+    };
+
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -45,7 +99,6 @@ const AdminLayout = () => {
     const handleGlobalSearch = (e) => {
         e.preventDefault();
         if (globalSearch.trim()) {
-            // Navigate to users page with search query
             navigate(`/admin/users?search=${encodeURIComponent(globalSearch)}`);
             setGlobalSearch('');
         }
@@ -60,6 +113,12 @@ const AdminLayout = () => {
 
     return (
         <div className="min-h-screen bg-dark flex text-slate-300 font-sans">
+            <AdminApprovalModal
+                request={approvalRequest}
+                onApprove={handleApproveLogin}
+                onReject={handleRejectLogin}
+            />
+
             {/* Sidebar */}
             <motion.aside
                 initial={{ width: 280 }}
@@ -76,6 +135,7 @@ const AdminLayout = () => {
 
                 {/* Nav Items */}
                 <nav className="flex-1 py-6 space-y-1.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-slate-500">
+                    {/* ... (rest of nav code remains same, included for context if full replacement) */}
                     {isSidebarOpen && <div className="px-2 mb-2">Systems</div>}
                     {navigation.map((item) => {
                         const isActive = location.pathname === item.href;

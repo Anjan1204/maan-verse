@@ -74,8 +74,56 @@ const io = require('socket.io')(server, {
 
 app.set('io', io); // Make io accessible in controllers
 
+const loginRequests = require('./utils/loginRequests');
+
 io.on('connection', (socket) => {
     console.log('Client connected: ' + socket.id);
+
+    // Admin Joining the Active Room
+    socket.on('admin:join', () => {
+        console.log(`Socket ${socket.id} joined active-admins`);
+        socket.join('active-admins');
+    });
+
+    // Client waiting for approval connects their socket to the request
+    socket.on('login:wait', (requestId) => {
+        if (loginRequests.has(requestId)) {
+            const reqData = loginRequests.get(requestId);
+            reqData.socketId = socket.id;
+            loginRequests.set(requestId, reqData);
+            console.log(`Socket ${socket.id} linked to request ${requestId}`);
+        }
+    });
+
+    // Admin responding to a request
+    socket.on('admin:response', ({ requestId, approved, adminName }) => {
+        console.log(`Admin response for ${requestId}: ${approved ? 'Approved' : 'Rejected'}`);
+
+        if (loginRequests.has(requestId)) {
+            const reqData = loginRequests.get(requestId);
+            const clientSocketId = reqData.socketId;
+
+            if (clientSocketId) {
+                if (approved) {
+                    // Send success to the waiting user
+                    io.to(clientSocketId).emit('login:result', {
+                        success: true,
+                        token: reqData.token, // Send the stored token
+                        user: reqData.user
+                    });
+                } else {
+                    // Send rejection
+                    io.to(clientSocketId).emit('login:result', {
+                        success: false,
+                        message: 'Login request rejected by admin'
+                    });
+                }
+            }
+
+            // Cleanup
+            loginRequests.delete(requestId);
+        }
+    });
 
     socket.on('disconnect', () => {
         console.log('Client disconnected');

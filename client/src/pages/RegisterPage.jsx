@@ -15,8 +15,14 @@ const RegisterPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await register(name, email, password, role);
-            navigate('/student/dashboard');
+            const user = await register(name, email, password, role);
+            if (user.role === 'admin') {
+                navigate('/admin/dashboard');
+            } else if (user.role === 'faculty') {
+                navigate('/faculty/dashboard');
+            } else {
+                navigate('/student/dashboard');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');
         }

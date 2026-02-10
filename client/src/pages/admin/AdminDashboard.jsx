@@ -19,14 +19,17 @@ const AdminDashboard = () => {
     const [usageData, setUsageData] = useState([]);
     const [pieData, setPieData] = useState([]);
 
+    const [adminUsers, setAdminUsers] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const socket = useSocket();
 
     const fetchStats = async () => {
         try {
-            const [{ data: statsData }, { data: inqData }] = await Promise.all([
+            const [{ data: statsData }, { data: inqData }, { data: adminsData }] = await Promise.all([
                 api.get('/users/stats'),
-                api.get('/inquiries')
+                api.get('/inquiries'),
+                api.get('/admin/users')
             ]);
             setStats(statsData.stats);
             setRecentUsers(statsData.recentUsers || []);
@@ -34,10 +37,21 @@ const AdminDashboard = () => {
             // If graphData is empty (no new users in 7 days), provide simplified placeholder or empty
             setUsageData(statsData.graphData && statsData.graphData.length > 0 ? statsData.graphData : []);
             setInquiries(inqData);
+            setAdminUsers(adminsData);
         } catch (error) {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleApproveAdmin = async (id) => {
+        try {
+            await api.put(`/admin/approve/${id}`);
+            toast.success('Admin approved successfully');
+            fetchStats();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to approve admin');
         }
     };
 
@@ -234,6 +248,58 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Pending Admin Requests Table */}
+            {adminUsers.some(u => !u.isApproved) && (
+                <div className="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden mt-8 mb-8">
+                    <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-indigo-900/20">
+                        <div>
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Users className="text-indigo-400" size={20} />
+                                Pending Admin Requests
+                            </h3>
+                            <p className="text-sm text-gray-400 mt-1">New admins waiting for your approval</p>
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-gray-400">
+                            <thead className="bg-gray-700/50 text-gray-200 text-xs uppercase font-medium">
+                                <tr>
+                                    <th className="px-6 py-4">Admin Name</th>
+                                    <th className="px-6 py-4">Email</th>
+                                    <th className="px-6 py-4">Joined Date</th>
+                                    <th className="px-6 py-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-700">
+                                {adminUsers.filter(u => !u.isApproved).map((admin) => (
+                                    <tr key={admin._id} className="hover:bg-gray-700/30 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                                                    {admin.name.charAt(0)}
+                                                </div>
+                                                <span className="text-white font-medium">{admin.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-300">{admin.email}</td>
+                                        <td className="px-6 py-4 text-gray-400">{new Date(admin.createdAt).toLocaleDateString()}</td>
+                                        <td className="px-6 py-4">
+                                            <button
+                                                onClick={() => handleApproveAdmin(admin._id)}
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-emerald-500/20"
+                                            >
+                                                <Check size={14} />
+                                                Approve
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* Faculty Inquiries Table */}
             <div className="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden mt-8">
