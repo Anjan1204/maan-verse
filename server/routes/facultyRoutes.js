@@ -8,7 +8,9 @@ const {
     updateMySubjects,
     getFacultyTimetable,
     addTimetableSlot,
-    removeTimetableSlot
+    removeTimetableSlot,
+    getFacultyProfile,
+    updateFacultyProfile
 } = require('../controllers/facultyController');
 const { protect, faculty } = require('../middleware/authMiddleware'); // Assuming we have 'faculty' middleware or check role in controller
 
@@ -18,7 +20,8 @@ const facultyCheck = (req, res, next) => {
         next();
     } else {
         res.status(401);
-        throw new Error('Not authorized as faculty');
+        const error = new Error('Not authorized as faculty');
+        next(error);
     }
 };
 
@@ -30,5 +33,7 @@ router.post('/subjects', protect, facultyCheck, updateMySubjects);
 router.get('/timetable', protect, facultyCheck, getFacultyTimetable);
 router.post('/timetable', protect, facultyCheck, addTimetableSlot);
 router.delete('/timetable/:id', protect, facultyCheck, removeTimetableSlot);
+router.get('/profile', protect, facultyCheck, getFacultyProfile);
+router.put('/profile', protect, facultyCheck, updateFacultyProfile);
 
 module.exports = router;

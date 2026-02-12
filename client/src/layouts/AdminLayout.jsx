@@ -108,6 +108,7 @@ const AdminLayout = () => {
         { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Users', href: '/admin/users', icon: Users },
         { name: 'Courses', href: '/admin/courses', icon: BookOpen },
+        { name: 'Profile', href: '/admin/profile', icon: UserCircle },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
     ];
 

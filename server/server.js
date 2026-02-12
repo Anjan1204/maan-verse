@@ -42,6 +42,7 @@ app.use((req, res, next) => {
 
 // Define Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/student', require('./routes/studentRoutes'));
 app.use('/api/faculty', require('./routes/facultyRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));

@@ -50,6 +50,14 @@ const userSchema = mongoose.Schema({
         phone: String,
         joinDate: Date,
     },
+    // Detailed Admin Profile
+    adminProfile: {
+        employeeId: String,
+        department: String,
+        designation: String,
+        phone: String,
+        joinDate: Date,
+    },
     // For students
     attendance: {
         totalClasses: { type: Number, default: 0 },
@@ -70,9 +78,9 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
-        return next();
+        return;
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

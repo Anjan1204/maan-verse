@@ -10,7 +10,8 @@ import {
     Menu,
     ChevronRight,
     Award,
-    Bell
+    Bell,
+    User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from '../components/NotificationDropdown';
@@ -29,6 +30,7 @@ const FacultyLayout = () => {
 
     const navigation = [
         { name: 'Dashboard', href: '/faculty/dashboard', icon: LayoutDashboard },
+        { name: 'Profile', href: '/faculty/profile', icon: User },
         { name: 'My Classes', href: '/faculty/classes', icon: BookOpen },
         { name: 'Attendance', href: '/faculty/attendance', icon: CheckSquare },
         { name: 'Timetable', href: '/faculty/timetable', icon: Calendar },

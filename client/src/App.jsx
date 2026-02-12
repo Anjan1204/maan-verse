@@ -22,10 +22,12 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminCourses from './pages/admin/AdminCourses';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminProfile from './pages/admin/AdminProfile';
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
 import FacultyAttendance from './pages/faculty/FacultyAttendance';
 import FacultyTimetable from './pages/faculty/FacultyTimetable';
 import FacultyStudents from './pages/faculty/FacultyStudents';
+import FacultyProfile from './pages/faculty/FacultyProfile';
 import FacultyLayout from './layouts/FacultyLayout';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentAttendance from './pages/student/StudentAttendance';
@@ -63,6 +65,7 @@ function App() {
             <Route element={<ProtectedRoute roles={['faculty', 'admin']} />}>
               <Route path="/faculty" element={<FacultyLayout />}>
                 <Route path="dashboard" element={<FacultyDashboard />} />
+                <Route path="profile" element={<FacultyProfile />} />
                 <Route path="attendance" element={<FacultyAttendance />} />
                 <Route path="timetable" element={<FacultyTimetable />} />
                 <Route path="students" element={<FacultyStudents />} />
@@ -90,6 +93,7 @@ function App() {
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="courses" element={<AdminCourses />} />
+                <Route path="profile" element={<AdminProfile />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
             </Route>

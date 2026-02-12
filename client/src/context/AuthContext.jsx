@@ -15,30 +15,37 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
+    // Synchronize user state with localStorage whenever it changes
+    const syncUser = (userData) => {
+        if (userData) {
+            localStorage.setItem('userInfo', JSON.stringify(userData));
+        } else {
+            localStorage.removeItem('userInfo');
+        }
+        setUser(userData);
+    };
+
     const login = async (email, password) => {
         const { data } = await api.post('/auth/login', { email, password });
 
         if (!data.requireApproval) {
-            localStorage.setItem('userInfo', JSON.stringify(data));
-            setUser(data);
+            syncUser(data);
         }
         return data;
     };
 
     const register = async (name, email, password, role) => {
         const { data } = await api.post('/auth/register', { name, email, password, role });
-        localStorage.setItem('userInfo', JSON.stringify(data));
-        setUser(data);
+        syncUser(data);
         return data;
     };
 
     const logout = () => {
-        localStorage.removeItem('userInfo');
-        setUser(null);
+        syncUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, setUser, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, setUser: syncUser, login, register, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

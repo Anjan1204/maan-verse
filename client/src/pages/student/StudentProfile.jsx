@@ -1,43 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Phone, MapPin, Calendar, Mail, Save } from 'lucide-react';
+import { User, Phone, MapPin, Calendar, Mail, Save, Upload, GraduationCap, BookOpen } from 'lucide-react';
 import { toast } from 'react-toastify';
 import api from '../../utils/api';
 
 const StudentProfile = () => {
     const { user, setUser } = useAuth();
     const [loading, setLoading] = useState(false);
+    const fileInputRef = useRef(null);
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
         phone: user?.studentProfile?.phone || '',
         address: user?.studentProfile?.address || '',
         dob: user?.studentProfile?.dob ? new Date(user.studentProfile.dob).toISOString().split('T')[0] : '',
+        rollNo: user?.studentProfile?.rollNo || '',
+        branch: user?.studentProfile?.branch || '',
+        semester: user?.studentProfile?.semester || '',
         avatar: user?.profile?.avatar || ''
     });
-    const [uploading, setUploading] = useState(false);
 
-    const handleImageChange = async (e) => {
+    const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
-        setUploading(true);
-
-        try {
-            const { data } = await api.post('/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            // data typically returns filepath like /uploads/filename.jpg
-            setFormData(prev => ({ ...prev, avatar: data }));
-            toast.success('Image Uploaded Temporarily - Click Update to Save');
-        } catch (error) {
-            console.error(error);
-            toast.error('Image Upload Failed');
-        } finally {
-            setUploading(false);
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            return;
         }
+
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image size should be less than 5MB');
+            return;
+        }
+
+        // Convert to base64 for preview and storage
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result;
+            setFormData(prev => ({ ...prev, avatar: base64String }));
+            toast.success('Image selected - Click Update to Save');
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleChange = (e) => {
@@ -54,13 +60,22 @@ const StudentProfile = () => {
                 studentProfile: {
                     phone: formData.phone,
                     address: formData.address,
-                    dob: formData.dob
+                    dob: formData.dob,
+                    rollNo: formData.rollNo,
+                    branch: formData.branch,
+                    semester: formData.semester
                 },
                 profile: {
                     avatar: formData.avatar
                 }
             });
-            setUser(data);
+
+            // Update global auth state with merged data from database
+            const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+            if (userInfo) {
+                setUser({ ...userInfo, ...data });
+            }
+
             toast.success('System Records Updated');
         } catch (err) {
             const message = err.response?.data?.message || 'Data Synchronization Failed';
@@ -103,22 +118,29 @@ const StudentProfile = () => {
                                     className="w-full h-full object-cover rounded-[1.2rem] grayscale group-hover:grayscale-0 transition-all duration-500"
                                 />
                                 <label className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                                    {uploading ? (
-                                        <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        <span className="text-[10px] font-black text-white uppercase tracking-widest bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-md">Change</span>
-                                    )}
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                                    <span className="text-[10px] font-black text-white uppercase tracking-widest bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-md">Change</span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} ref={fileInputRef} />
                                 </label>
                             </div>
                             <div className="mb-2">
                                 <h2 className="text-3xl font-black text-white tracking-tight">{user?.name}</h2>
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-2">
-                                    <span className="px-3 py-1 bg-primary/20 text-primary border border-primary/20 rounded-full text-[10px] font-black uppercase tracking-widest">Roll No: {user?.studentProfile?.rollNo || 'Not Assigned'}</span>
-                                    <span className="px-3 py-1 bg-white/5 text-gray-400 border border-white/5 rounded-full text-[10px] font-black uppercase tracking-widest">Branch: {user?.studentProfile?.branch || 'CSE'}</span>
+                                    <span className="px-3 py-1 bg-primary/20 text-primary border border-primary/20 rounded-full text-[10px] font-black uppercase tracking-widest">Roll No: {formData.rollNo || 'Not Assigned'}</span>
+                                    <span className="px-3 py-1 bg-white/5 text-gray-400 border border-white/5 rounded-full text-[10px] font-black uppercase tracking-widest">Branch: {formData.branch || 'Not Set'}</span>
+                                    {formData.semester && (
+                                        <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">Sem: {formData.semester}</span>
+                                    )}
                                 </div>
                             </div>
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-6 py-3 bg-primary/20 border border-primary/30 text-primary rounded-2xl font-black uppercase tracking-widest hover:bg-primary/30 transition-all active:scale-95 flex items-center gap-2 text-xs"
+                        >
+                            <Upload size={16} />
+                            Upload Photo
+                        </button>
                     </div>
 
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
@@ -179,6 +201,51 @@ const StudentProfile = () => {
                                     value={formData.dob}
                                     onChange={handleChange}
                                     className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/5 rounded-2xl text-white font-semibold transition-all focus:bg-white/[0.05] focus:border-primary/50 outline-none [color-scheme:dark]"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1 block">Roll Number</label>
+                            <div className="relative group">
+                                <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-primary transition-colors" size={18} />
+                                <input
+                                    type="text"
+                                    name="rollNo"
+                                    value={formData.rollNo}
+                                    onChange={handleChange}
+                                    className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/5 rounded-2xl text-white font-semibold transition-all focus:bg-white/[0.05] focus:border-primary/50 outline-none placeholder:text-gray-700"
+                                    placeholder="Enter roll number"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1 block">Branch / Department</label>
+                            <div className="relative group">
+                                <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-primary transition-colors" size={18} />
+                                <input
+                                    type="text"
+                                    name="branch"
+                                    value={formData.branch}
+                                    onChange={handleChange}
+                                    className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/5 rounded-2xl text-white font-semibold transition-all focus:bg-white/[0.05] focus:border-primary/50 outline-none placeholder:text-gray-700"
+                                    placeholder="e.g., Computer Science"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1 block">Current Semester</label>
+                            <div className="relative group">
+                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-primary transition-colors" size={18} />
+                                <input
+                                    type="text"
+                                    name="semester"
+                                    value={formData.semester}
+                                    onChange={handleChange}
+                                    className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/5 rounded-2xl text-white font-semibold transition-all focus:bg-white/[0.05] focus:border-primary/50 outline-none placeholder:text-gray-700"
+                                    placeholder="e.g., 5"
                                 />
                             </div>
                         </div>

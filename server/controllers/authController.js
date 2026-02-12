@@ -32,6 +32,10 @@ const authUser = async (req, res, next) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                profile: user.profile,
+                studentProfile: user.studentProfile,
+                facultyProfile: user.facultyProfile,
+                adminProfile: user.adminProfile,
                 token: generateToken(user._id),
             });
         } else {
@@ -94,6 +98,10 @@ const registerUser = async (req, res, next) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                profile: user.profile,
+                studentProfile: user.studentProfile,
+                facultyProfile: user.facultyProfile,
+                adminProfile: user.adminProfile,
                 token: generateToken(user._id),
             });
         } else {

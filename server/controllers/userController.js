@@ -40,8 +40,10 @@ const updateUserProfile = async (req, res, next) => {
             throw new Error('User not found');
         }
 
-        // Basic fields
-        user.name = req.body.name || user.name;
+        console.log(`[PRO-SAVE] Updating profile for user: ${user.name} (${user.role})`);
+
+        // Update name
+        if (req.body.name) user.name = req.body.name;
 
         // Handle Email (unique check)
         if (req.body.email && req.body.email !== user.email) {
@@ -53,37 +55,40 @@ const updateUserProfile = async (req, res, next) => {
             user.email = req.body.email;
         }
 
-        // Update basic profile (avatar, bio)
+        // Update Profile (Avatar/Bio) - Deep assignment to trigger Mongoose setters
         if (req.body.profile) {
-            if (!user.profile) user.profile = {};
-            if (req.body.profile.avatar !== undefined) user.profile.avatar = req.body.profile.avatar;
-            if (req.body.profile.bio !== undefined) user.profile.bio = req.body.profile.bio;
+            user.profile = {
+                ...(user.profile ? (typeof user.profile.toObject === 'function' ? user.profile.toObject() : user.profile) : {}),
+                ...req.body.profile
+            };
+            user.markModified('profile');
         }
 
-        // Update role-specific profile
+        // Update Role-Specific Profiles
         if (user.role === 'student' && req.body.studentProfile) {
-            if (!user.studentProfile) user.studentProfile = {};
+            user.studentProfile = {
+                ...(user.studentProfile ? (typeof user.studentProfile.toObject === 'function' ? user.studentProfile.toObject() : user.studentProfile) : {}),
+                ...req.body.studentProfile
+            };
 
-            const sp = req.body.studentProfile;
-            // Explicitly update fields to allow clearing (empty strings)
-            if (sp.phone !== undefined) user.studentProfile.phone = sp.phone;
-            if (sp.address !== undefined) user.studentProfile.address = sp.address;
-            if (sp.rollNo !== undefined) user.studentProfile.rollNo = sp.rollNo;
-            if (sp.branch !== undefined) user.studentProfile.branch = sp.branch;
-            if (sp.semester !== undefined) user.studentProfile.semester = sp.semester;
-
-            if (sp.dob) {
-                const dobDate = new Date(sp.dob);
+            // Explicitly handle date if provided string
+            if (req.body.studentProfile.dob) {
+                const dobDate = new Date(req.body.studentProfile.dob);
                 if (!isNaN(dobDate.getTime())) {
                     user.studentProfile.dob = dobDate;
                 }
-            } else if (sp.dob === '') {
+            } else if (req.body.studentProfile.dob === '') {
                 user.studentProfile.dob = null;
             }
+
+            user.markModified('studentProfile');
+            console.log('[PRO-SAVE] Student profile changes prepared:', user.studentProfile);
         } else if (user.role === 'faculty' && req.body.facultyProfile) {
-            if (!user.facultyProfile) user.facultyProfile = {};
-            // For faculty, merge existing fields
-            Object.assign(user.facultyProfile, req.body.facultyProfile);
+            user.facultyProfile = {
+                ...(user.facultyProfile ? (typeof user.facultyProfile.toObject === 'function' ? user.facultyProfile.toObject() : user.facultyProfile) : {}),
+                ...req.body.facultyProfile
+            };
+            user.markModified('facultyProfile');
         }
 
         if (req.body.password) {
@@ -91,6 +96,7 @@ const updateUserProfile = async (req, res, next) => {
         }
 
         const updatedUser = await user.save();
+        console.log('[PRO-SAVE] Database update successful for:', updatedUser.email);
 
         res.json({
             _id: updatedUser._id,
@@ -104,7 +110,7 @@ const updateUserProfile = async (req, res, next) => {
             isActive: updatedUser.isActive
         });
     } catch (error) {
-        console.error('ERROR in updateUserProfile:', error);
+        console.error('[PRO-ERROR] updateUserProfile failure:', error);
         const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
         res.status(statusCode).json({
             message: error.message || 'Data Synchronization Failed',

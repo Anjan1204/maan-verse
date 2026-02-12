@@ -250,6 +250,104 @@ const removeTimetableSlot = async (req, res, next) => {
     }
 };
 
+// @desc    Get Faculty Profile
+// @route   GET /api/faculty/profile
+// @access  Private/Faculty
+const getFacultyProfile = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password');
+
+        if (!user) {
+            res.status(404);
+            throw new Error('User not found');
+        }
+
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            profile: user.profile || {},
+            facultyProfile: user.facultyProfile || {}
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update Faculty Profile
+// @route   PUT /api/faculty/profile
+// @access  Private/Faculty
+const updateFacultyProfile = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            res.status(404);
+            throw new Error('User not found');
+        }
+
+        console.log(`[PRO-SAVE] Updating faculty profile: ${user.name}`);
+
+        // Update name
+        if (req.body.name) user.name = req.body.name;
+
+        // Handle Email (unique check)
+        if (req.body.email && req.body.email !== user.email) {
+            const emailExists = await User.findOne({ email: req.body.email });
+            if (emailExists) {
+                res.status(400);
+                throw new Error('Email address already in use');
+            }
+            user.email = req.body.email;
+        }
+
+        // Update basic profile (avatar, bio)
+        if (req.body.profile) {
+            user.profile = {
+                ...(user.profile ? (typeof user.profile.toObject === 'function' ? user.profile.toObject() : user.profile) : {}),
+                ...req.body.profile
+            };
+            user.markModified('profile');
+        }
+
+        // Update faculty-specific profile
+        if (req.body.facultyProfile) {
+            user.facultyProfile = {
+                ...(user.facultyProfile ? (typeof user.facultyProfile.toObject === 'function' ? user.facultyProfile.toObject() : user.facultyProfile) : {}),
+                ...req.body.facultyProfile
+            };
+
+            // Handle Join Date
+            if (req.body.facultyProfile.joinDate) {
+                const joinDateObj = new Date(req.body.facultyProfile.joinDate);
+                if (!isNaN(joinDateObj.getTime())) {
+                    user.facultyProfile.joinDate = joinDateObj;
+                }
+            } else if (req.body.facultyProfile.joinDate === '') {
+                user.facultyProfile.joinDate = null;
+            }
+
+            user.markModified('facultyProfile');
+        }
+
+        const updatedUser = await user.save();
+        console.log('[PRO-SAVE] Faculty update successful:', updatedUser.email);
+
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            profile: updatedUser.profile,
+            facultyProfile: updatedUser.facultyProfile
+        });
+    } catch (error) {
+        console.error('[PRO-ERROR] updateFacultyProfile failure:', error);
+        next(error);
+    }
+};
+
 module.exports = {
     getFacultyDashboard,
     getMyClasses,
@@ -258,5 +356,7 @@ module.exports = {
     updateMySubjects,
     getFacultyTimetable,
     addTimetableSlot,
-    removeTimetableSlot
+    removeTimetableSlot,
+    getFacultyProfile,
+    updateFacultyProfile
 };
