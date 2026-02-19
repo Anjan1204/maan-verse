@@ -10,7 +10,10 @@ import {
     X,
     Bell,
     Search,
-    UserCircle
+    UserCircle,
+    ClipboardPen,
+    CreditCard,
+    DollarSign
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
@@ -108,7 +111,10 @@ const AdminLayout = () => {
         { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Users', href: '/admin/users', icon: Users },
         { name: 'Courses', href: '/admin/courses', icon: BookOpen },
+        { name: 'Student Fees', href: '/admin/fees', icon: DollarSign },
+        { name: 'Payroll', href: '/admin/payroll', icon: CreditCard },
         { name: 'Profile', href: '/admin/profile', icon: UserCircle },
+        { name: 'Leave Requests', href: '/admin/leave', icon: ClipboardPen },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
     ];
 

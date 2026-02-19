@@ -19,7 +19,13 @@ const timetableSchema = mongoose.Schema({
         subject: String,
         teacher: String,
         room: String,
-    }]
+        meetingLink: String,
+        meetingPassword: String,
+    }],
+    isPublished: {
+        type: Boolean,
+        default: false,
+    }
 }, {
     timestamps: true,
 });

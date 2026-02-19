@@ -15,7 +15,8 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // CORS configuration for production
 const allowedOrigins = [
@@ -64,6 +65,16 @@ app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/inquiries', require('./routes/inquiryRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/notices', require('./routes/noticeRoutes'));
+app.use('/api/assignments', require('./routes/assignmentRoutes'));
+app.use('/api/forum', require('./routes/forumRoutes'));
+app.use('/api/leave', require('./routes/leaveRoutes'));
+app.use('/api/messaging', require('./routes/messageRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/badges', require('./routes/badgeRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/fees', require('./routes/feeRoutes'));
+app.use('/api/payroll', require('./routes/payrollRoutes'));
+app.use('/api/plagiarism', require('./routes/plagiarismRoutes'));
 
 // Error Handler
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -74,7 +85,6 @@ const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-    console.log('Server running');
 });
 
 // Socket.io configuration

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../utils/api';
 import { useSocket } from '../../context/SocketContext'; // Import Socket
-import { Users, BookOpen, Clock, Activity } from 'lucide-react';
+import { Users, BookOpen, Clock, Activity, Building2, Plus, X } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -66,7 +66,62 @@ const FacultyDashboard = () => {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold text-white tracking-tight">Faculty Overview</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-white tracking-tight">Faculty Overview</h1>
+                <div className="text-sm font-medium text-emerald-500 bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20">
+                    Active Session: {stats.todayClasses} Classes Today
+                </div>
+            </div>
+
+            {/* Teaching Preferences / Selection */}
+            <div className="bg-gray-900/50 backdrop-blur-sm rounded-3xl p-8 border border-white/5 shadow-xl">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                            <Building2 className="text-emerald-500" size={24} />
+                            Teaching Assignment
+                        </h3>
+                        <p className="text-gray-400 text-sm mt-1">Select the department and classes you are currently assigned to</p>
+                    </div>
+                    <button
+                        onClick={() => window.location.href = '/faculty/profile'}
+                        className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl font-bold transition-all active:scale-95 text-sm"
+                    >
+                        Update in Profile
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                    <div className="space-y-4">
+                        <label className="block text-[10px] font-bold text-emerald-500 uppercase tracking-widest ml-1">Current Department</label>
+                        <div className="p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold flex items-center justify-between">
+                            <span>{stats.department || 'Not Assigned'}</span>
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md uppercase">Primary</span>
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <label className="block text-[10px] font-bold text-emerald-500 uppercase tracking-widest ml-1">Your Classes / Subjects</label>
+                        <div className="flex flex-wrap gap-3">
+                            {stats.subjects && stats.subjects.length > 0 ? (
+                                stats.subjects.map((sub, i) => (
+                                    <span key={i} className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 font-medium text-sm">
+                                        {sub}
+                                    </span>
+                                ))
+                            ) : (
+                                <p className="text-gray-500 text-sm italic">No subjects selected yet.</p>
+                            )}
+                            <button
+                                onClick={() => window.location.href = '/faculty/profile'}
+                                className="p-2 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-emerald-500 hover:bg-white/10 transition-all"
+                                title="Add Subjects"
+                            >
+                                <Plus size={18} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {cards.map((stat, i) => (
@@ -126,7 +181,10 @@ const FacultyDashboard = () => {
                                     <h4 className="font-bold text-gray-100 text-lg group-hover:text-emerald-400 transition-colors">{cls.subject}</h4>
                                     <p className="text-xs text-gray-500 font-medium">{cls.class} • Room {cls.room}</p>
                                 </div>
-                                <button className="ml-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-600/20 active:scale-90">
+                                <button
+                                    onClick={() => window.location.href = '/faculty/timetable'}
+                                    className="ml-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-600/20 active:scale-90"
+                                >
                                     Details
                                 </button>
                             </div>

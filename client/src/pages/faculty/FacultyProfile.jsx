@@ -119,9 +119,9 @@ const FacultyProfile = () => {
                 return;
             }
 
-            // Check file size (max 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                setError('Image size should be less than 5MB');
+            // Check file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                setError('Image size should be less than 10MB');
                 setTimeout(() => setError(null), 3000);
                 return;
             }

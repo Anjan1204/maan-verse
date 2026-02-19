@@ -7,7 +7,20 @@ const FacultyAttendance = () => {
     const [selectedClass, setSelectedClass] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [students, setStudents] = useState([]);
+    const [classList, setClassList] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchClasses = async () => {
+            try {
+                const { data } = await api.get('/faculty/classes');
+                setClassList(data);
+            } catch (error) {
+                toast.error('Failed to load classes');
+            }
+        };
+        fetchClasses();
+    }, []);
 
     useEffect(() => {
         // Fetch students when class changes
@@ -75,9 +88,9 @@ const FacultyAttendance = () => {
                             className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 text-white appearance-none cursor-pointer transition-all hover:bg-white/10"
                         >
                             <option value="" className="bg-gray-900">-- Choose Class --</option>
-                            <option value="Computer Networks" className="bg-gray-900">Computer Networks (CSE-A)</option>
-                            <option value="Database Management" className="bg-gray-900">Database Management (CSE-B)</option>
-                            <option value="Operating Systems" className="bg-gray-900">Operating Systems (CSE-A)</option>
+                            {classList.map((cls, index) => (
+                                <option key={index} value={cls} className="bg-gray-900">{cls}</option>
+                            ))}
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 group-hover:text-emerald-500 transition-colors mt-0.5">
                             <Calendar size={18} />

@@ -15,10 +15,17 @@ const RegisterPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const user = await register(name, email, password, role);
-            if (user.role === 'admin') {
+            const data = await register(name, email, password, role);
+
+            if (data.pendingApproval) {
+                setError(data.message || 'Registration successful! Your account is pending approval by the main admin. You can log in once approved.');
+                // Don't navigate, let them see the message
+                return;
+            }
+
+            if (data.role === 'admin') {
                 navigate('/admin/dashboard');
-            } else if (user.role === 'faculty') {
+            } else if (data.role === 'faculty') {
                 navigate('/faculty/dashboard');
             } else {
                 navigate('/student/dashboard');

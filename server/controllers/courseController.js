@@ -159,8 +159,6 @@ const deleteCourse = async (req, res, next) => {
 // @access  Private/Admin
 const getAllCoursesAdmin = async (req, res, next) => {
     try {
-        console.log('--- ADMIN FETCH ALL COURSES REQUEST ---');
-        console.log('Keyword:', req.query.keyword);
 
         const keyword = req.query.keyword
             ? {
@@ -173,12 +171,10 @@ const getAllCoursesAdmin = async (req, res, next) => {
 
         const category = req.query.category ? { category: req.query.category } : {};
 
-        console.log('Query:', { ...keyword, ...category });
 
         // Admin sees ALL courses, not just published ones
         const courses = await Course.find({ ...keyword, ...category }).populate('faculty', 'name');
 
-        console.log(`Found ${courses.length} courses`);
         res.json(courses);
     } catch (error) {
         console.error('Error in getAllCoursesAdmin:', error);

@@ -1,32 +1,73 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import api from '../../utils/api';
-import { Clock } from 'lucide-react';
+import { useSocket } from '../../context/SocketContext';
+import { Clock, Video } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const StudentTimetable = () => {
     const [timetable, setTimetable] = useState([]);
+    const [studentInfo, setStudentInfo] = useState({ branch: '', semester: '' });
+    const socket = useSocket();
 
-    useEffect(() => {
-        const fetchTimetable = async () => {
-            try {
-                const { data } = await api.get('/student/timetable');
-                setTimetable(data);
-            } catch (error) {
-                console.error(error);
-            }
-        };
-        fetchTimetable();
+    const fetchTimetable = useCallback(async () => {
+        try {
+            const { data } = await api.get('/student/timetable');
+            setTimetable(data);
+
+            // Get current user info from localStorage to see what we're matching
+            const user = JSON.parse(localStorage.getItem('userInfo'));
+            setStudentInfo({
+                branch: user?.studentProfile?.branch || 'Not Set',
+                semester: user?.studentProfile?.semester || 'Not Set'
+            });
+        } catch (error) {
+            console.error(error);
+        }
     }, []);
 
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    useEffect(() => {
+        fetchTimetable();
+    }, [fetchTimetable]);
+
+    useEffect(() => {
+        if (socket) {
+            socket.on('timetable:published', (data) => {
+                fetchTimetable();
+            });
+        }
+        return () => {
+            if (socket) {
+                socket.off('timetable:published');
+            }
+        };
+    }, [socket, fetchTimetable]);
+
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     return (
         <div className="space-y-10 pb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-4xl font-black text-white tracking-tight leading-tight">Weekly Roadmap</h1>
-                    <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-2">Strategize your academic journey with precise scheduling</p>
+                    <div className="flex items-center gap-4 mt-3">
+                        <span className="text-[10px] px-3 py-1 bg-white/5 text-gray-400 border border-white/10 rounded-full font-black uppercase tracking-widest">Branch: <span className="text-primary">{studentInfo.branch}</span></span>
+                        <span className="text-[10px] px-3 py-1 bg-white/5 text-gray-400 border border-white/10 rounded-full font-black uppercase tracking-widest">Semester: <span className="text-primary">{studentInfo.semester}</span></span>
+                    </div>
                 </div>
+                {(studentInfo.branch === 'Not Set' || studentInfo.semester === 'Not Set') && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex items-center gap-4 max-w-md"
+                    >
+                        <div className="w-10 h-10 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center shrink-0">
+                            <Clock size={20} />
+                        </div>
+                        <p className="text-[10px] text-orange-200/70 font-bold leading-relaxed">
+                            Your profile is incomplete. Please update your <strong className="text-orange-400">Branch</strong> and <strong className="text-orange-400">Semester</strong> in settings to see your assigned timetable.
+                        </p>
+                    </motion.div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -51,7 +92,8 @@ const StudentTimetable = () => {
                                         <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-white/10">
                                             <Clock size={24} className="text-gray-600" />
                                         </div>
-                                        <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em]">Operational Break</p>
+                                        <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2 leading-relaxed text-center px-4">Nothing Scheduled</p>
+                                        <p className="text-gray-600 text-[8px] font-bold uppercase tracking-widest text-center px-6">Ensure your Profile Branch/Sem match precisely with Faculty inputs</p>
                                     </div>
                                 ) : (
                                     daySchedule.slots.map((slot, i) => (
@@ -72,6 +114,14 @@ const StudentTimetable = () => {
                                                     <div className="w-1 h-1 rounded-full bg-gray-700" />
                                                     <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest leading-none">{slot.teacher}</span>
                                                 </div>
+                                                {slot.meetingLink && (
+                                                    <button
+                                                        onClick={() => window.open(slot.meetingLink, '_blank')}
+                                                        className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-500/10"
+                                                    >
+                                                        <Video size={14} /> Join Live Class
+                                                    </button>
+                                                )}
                                             </div>
                                             {/* Hover Accent */}
                                             <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary opacity-0 group-hover/slot:opacity-100 transition-opacity" />

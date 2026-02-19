@@ -13,8 +13,10 @@ const FacultyTimetable = () => {
         subject: '',
         room: '',
         class: '',
-        semester: '' // Added semester
+        semester: '',
+        meetingLink: '' // Added meeting link
     });
+    const [publishLoading, setPublishLoading] = useState(false);
 
     useEffect(() => {
         fetchTimetable();
@@ -29,6 +31,33 @@ const FacultyTimetable = () => {
             // toast.error("Failed to fetch timetable");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePublish = async () => {
+        // Find a representative branch/sem from the current timetable to publish
+        // This button normally publishes for the currently edited/viewed branch
+        // For now, we'll try to publish for any branch found in the list, 
+        // OR we can make it more explicit.
+        if (timetable.length === 0) {
+            toast.warn('Add some classes before publishing');
+            return;
+        }
+
+        const uniqueSets = [...new Set(timetable.map(t => `${t.branch}|${t.semester}`))];
+
+        try {
+            setPublishLoading(true);
+            for (const set of uniqueSets) {
+                const [branch, semester] = set.split('|');
+                await api.post('/faculty/timetable/publish', { branch, semester });
+            }
+            toast.success('Timetable published to students!');
+            fetchTimetable();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to publish');
+        } finally {
+            setPublishLoading(false);
         }
     };
 
@@ -48,13 +77,13 @@ const FacultyTimetable = () => {
                 branch: formData.class, // Map Class input to Branch (e.g. CSE)
             };
 
-            const { data } = await api.post('/faculty/timetable', payload);
+            await api.post('/faculty/timetable', payload);
 
             // Optimistic update or refetch
             // Refetch is safer to get the correct IDs
             fetchTimetable();
 
-            toast.success('Class scheduled successfully!');
+            toast.success('Class added to draft!');
             setFormData({ day: 'Monday', time: '', subject: '', room: '', class: '', semester: '' });
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to schedule class');
@@ -81,8 +110,19 @@ const FacultyTimetable = () => {
                     <h1 className="text-3xl font-bold text-white tracking-tight">Manage Timetable</h1>
                     <p className="text-gray-500 text-sm mt-1">Schedule and manage your weekly class sessions</p>
                 </div>
-                <button className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-500 shadow-2xl shadow-emerald-600/30 transition-all active:scale-95">
-                    Publish Changes
+                <button
+                    onClick={handlePublish}
+                    disabled={publishLoading}
+                    className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-500 shadow-2xl shadow-emerald-600/30 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                >
+                    {publishLoading ? (
+                        <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Publishing...
+                        </>
+                    ) : (
+                        'Publish Changes'
+                    )}
                 </button>
             </div>
 
@@ -128,10 +168,10 @@ const FacultyTimetable = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-2 ml-1">Branch/Class</label>
+                                <label className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-2 ml-1">Branch / Department</label>
                                 <input
                                     type="text"
-                                    placeholder="CSE-A"
+                                    placeholder="e.g. CSE"
                                     className="w-full p-3 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 text-white transition-all hover:bg-white/10 placeholder:text-gray-600"
                                     value={formData.class}
                                     onChange={(e) => setFormData({ ...formData, class: e.target.value })}
@@ -161,6 +201,16 @@ const FacultyTimetable = () => {
                                 required
                             />
                         </div>
+                        <div>
+                            <label className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-2 ml-1">Live Meeting Link (Optional)</label>
+                            <input
+                                type="url"
+                                placeholder="https://zoom.us/j/..."
+                                className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 text-white transition-all hover:bg-white/10 placeholder:text-gray-600"
+                                value={formData.meetingLink}
+                                onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                            />
+                        </div>
                         <button type="submit" className="w-full py-4 bg-white/10 text-white rounded-2xl font-bold hover:bg-white/20 border border-white/10 transition-all active:scale-95">
                             Add Session
                         </button>
@@ -185,13 +235,23 @@ const FacultyTimetable = () => {
                                             {item.day.substring(0, 3)}
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-gray-100 text-lg group-hover:text-emerald-400 transition-colors">{item.subject}</h4>
+                                            <div className="flex items-center gap-3">
+                                                <h4 className="font-bold text-gray-100 text-lg group-hover:text-emerald-400 transition-colors">{item.subject}</h4>
+                                                <span className={`text-[8px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest border ${item.isPublished
+                                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                                    : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`}>
+                                                    {item.isPublished ? 'Published' : 'Draft'}
+                                                </span>
+                                            </div>
                                             <div className="flex items-center gap-3 mt-1.5">
                                                 <span className="text-xs text-gray-500 font-medium">{item.time}</span>
                                                 <span className="w-1 h-1 rounded-full bg-gray-700"></span>
                                                 <span className="text-xs text-gray-400 font-bold border border-white/5 px-2 py-0.5 rounded-md bg-white/5">Room {item.room}</span>
                                                 <span className="w-1 h-1 rounded-full bg-gray-700"></span>
                                                 <span className="text-xs text-emerald-500/80 font-bold">{item.class}</span>
+                                                {item.meetingLink && (
+                                                    <span className="ml-3 px-2 py-0.5 bg-indigo-500/20 border border-indigo-500/30 rounded text-[9px] font-bold text-indigo-400">Live Available</span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

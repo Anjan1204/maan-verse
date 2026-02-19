@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import api from '../../utils/api';
 import { Search, Trash2, Edit, CheckCircle, XCircle } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
+    const [pendingRequests, setPendingRequests] = useState([]);
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [pages, setPages] = useState(1);
@@ -13,23 +14,27 @@ const AdminUsers = () => {
     const [editingUser, setEditingUser] = useState(null);
     const [formData, setFormData] = useState({ name: '', email: '', role: '' });
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
             const { data } = await api.get(`/users?keyword=${search}&pageNumber=${page}`);
             setUsers(data.users);
             setPage(data.page);
             setPages(data.pages);
+
+            // Also fetch pending registration requests
+            const { data: requests } = await api.get('/admin/pending-requests');
+            setPendingRequests(requests);
         } catch (error) {
             toast.error('Failed to load users');
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, search]);
 
     useEffect(() => {
         fetchUsers();
-    }, [page, search]);
+    }, [fetchUsers]);
 
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
@@ -92,6 +97,111 @@ const AdminUsers = () => {
                     />
                 </div>
             </div>
+
+            {/* Pending Approvals Section */}
+            {(pendingRequests.length > 0 || users.some(u => u.role === 'admin' && !u.isApproved)) && (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-6 space-y-4">
+                    <h2 className="text-xl font-bold text-yellow-500 flex items-center gap-2">
+                        <CheckCircle size={20} />
+                        Pending Admin Approvals
+                    </h2>
+                    <div className="grid gap-4">
+                        {/* Show New Model Requests */}
+                        {pendingRequests.map(request => (
+                            <div key={request._id} className="bg-gray-800/50 rounded-xl p-4 flex items-center justify-between border border-gray-700">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
+                                        {request.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p className="text-white font-medium">{request.name} <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full ml-2">New Request</span></p>
+                                        <p className="text-xs text-gray-500">{request.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await api.put(`/admin/approve/${request._id}`);
+                                                toast.success('Admin approved successfully');
+                                                fetchUsers();
+                                            } catch (error) {
+                                                toast.error('Failed to approve admin');
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
+                                    >
+                                        Approve
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (window.confirm('Are you sure you want to reject this admin request?')) {
+                                                try {
+                                                    await api.delete(`/admin/reject/${request._id}`);
+                                                    toast.success('Admin request rejected');
+                                                    fetchUsers();
+                                                } catch (error) {
+                                                    toast.error('Failed to reject admin');
+                                                }
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-red-600/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-600/20 transition-colors text-sm font-medium"
+                                    >
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Fallback: Show Legacy Unapproved Users */}
+                        {users.filter(u => u.role === 'admin' && !u.isApproved).map(user => (
+                            <div key={user._id} className="bg-gray-800/50 rounded-xl p-4 flex items-center justify-between border border-gray-700">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center text-white font-bold">
+                                        {user.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p className="text-white font-medium">{user.name} <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full ml-2">Legacy User</span></p>
+                                        <p className="text-xs text-gray-500">{user.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await api.put(`/admin/approve/${user._id}`);
+                                                toast.success('Admin approved successfully');
+                                                fetchUsers();
+                                            } catch (error) {
+                                                toast.error('Failed to approve admin');
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
+                                    >
+                                        Approve
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (window.confirm('Are you sure you want to reject this admin request? User will be deleted.')) {
+                                                try {
+                                                    await api.delete(`/admin/reject/${user._id}`);
+                                                    toast.success('Admin request rejected');
+                                                    fetchUsers();
+                                                } catch (error) {
+                                                    toast.error('Failed to reject admin');
+                                                }
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-red-600/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-600/20 transition-colors text-sm font-medium"
+                                    >
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
                 <div className="overflow-x-auto">

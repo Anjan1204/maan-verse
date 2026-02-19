@@ -3,6 +3,7 @@ const Course = require('../models/Course');
 const Attendance = require('../models/Attendance');
 const Timetable = require('../models/Timetable');
 const Notice = require('../models/Notice');
+const generateToken = require('../utils/generateToken');
 
 // @desc    Get faculty dashboard stats
 // @route   GET /api/faculty/dashboard
@@ -55,7 +56,9 @@ const getFacultyDashboard = async (req, res, next) => {
                 totalCourses: courses,
                 totalStudents: totalStudents,
                 todayClasses: formatedSchedule.length,
-                pendingTasks: 0 // removed mock
+                pendingTasks: 0,
+                department: req.user.facultyProfile?.department || '',
+                subjects: req.user.facultyProfile?.subjects || []
             },
             attendanceChart: attendanceStats,
             todaySchedule: formatedSchedule,
@@ -72,8 +75,9 @@ const getFacultyDashboard = async (req, res, next) => {
 const getMyClasses = async (req, res, next) => {
     try {
         // Return a list of subjects/classes this faculty teaches
-        // For now, return subjects from profile or mock
-        const subjects = req.user.facultyProfile?.subjects || ['Computer Networks', 'Database Management'];
+        // Fetch from user profile
+        const user = await User.findById(req.user._id);
+        const subjects = user.facultyProfile?.subjects || [];
         res.json(subjects);
     } catch (error) {
         next(error);
@@ -149,7 +153,7 @@ const updateMySubjects = async (req, res, next) => {
 // @access  Private/Faculty
 const addTimetableSlot = async (req, res, next) => {
     try {
-        const { branch, semester, day, time, subject, room } = req.body;
+        let { branch, semester, day, time, subject, room } = req.body;
 
         // Validation
         if (!branch || !semester || !day || !time || !subject || !room) {
@@ -157,15 +161,24 @@ const addTimetableSlot = async (req, res, next) => {
             throw new Error('Please provide all fields');
         }
 
-        // Find existing timetable or create new
-        let timetable = await Timetable.findOne({ branch, semester, day });
+        // Standardize: Trim inputs
+        branch = branch.trim();
+        semester = semester.trim();
+
+        // Find existing timetable or create new (case-insensitive find)
+        let timetable = await Timetable.findOne({
+            branch: { $regex: new RegExp(`^${branch}$`, 'i') },
+            semester: { $regex: new RegExp(`^${semester}$`, 'i') },
+            day
+        });
 
         if (!timetable) {
             timetable = new Timetable({
                 branch,
                 semester,
                 day,
-                slots: []
+                slots: [],
+                isPublished: false // New entries start as draft
             });
         }
 
@@ -207,7 +220,8 @@ const getFacultyTimetable = async (req, res, next) => {
                         room: slot.room,
                         class: `${timetable.branch} - Sem ${timetable.semester}`,
                         branch: timetable.branch,
-                        semester: timetable.semester
+                        semester: timetable.semester,
+                        isPublished: timetable.isPublished
                     });
                 }
             });
@@ -287,12 +301,9 @@ const updateFacultyProfile = async (req, res, next) => {
             throw new Error('User not found');
         }
 
-        console.log(`[PRO-SAVE] Updating faculty profile: ${user.name}`);
 
-        // Update name
+        // Update name and email
         if (req.body.name) user.name = req.body.name;
-
-        // Handle Email (unique check)
         if (req.body.email && req.body.email !== user.email) {
             const emailExists = await User.findOne({ email: req.body.email });
             if (emailExists) {
@@ -302,20 +313,28 @@ const updateFacultyProfile = async (req, res, next) => {
             user.email = req.body.email;
         }
 
-        // Update basic profile (avatar, bio)
+        if (req.body.password) {
+            user.password = req.body.password;
+        }
+
+        // Handle basic profile (bio, avatar)
         if (req.body.profile) {
             user.profile = {
-                ...(user.profile ? (typeof user.profile.toObject === 'function' ? user.profile.toObject() : user.profile) : {}),
-                ...req.body.profile
+                bio: req.body.profile.bio !== undefined ? req.body.profile.bio : (user.profile ? user.profile.bio : ''),
+                avatar: req.body.profile.avatar !== undefined ? req.body.profile.avatar : (user.profile ? user.profile.avatar : '')
             };
             user.markModified('profile');
         }
 
-        // Update faculty-specific profile
+        // Handle faculty-specific profile
         if (req.body.facultyProfile) {
             user.facultyProfile = {
-                ...(user.facultyProfile ? (typeof user.facultyProfile.toObject === 'function' ? user.facultyProfile.toObject() : user.facultyProfile) : {}),
-                ...req.body.facultyProfile
+                employeeId: req.body.facultyProfile.employeeId !== undefined ? req.body.facultyProfile.employeeId : (user.facultyProfile ? user.facultyProfile.employeeId : ''),
+                department: req.body.facultyProfile.department !== undefined ? req.body.facultyProfile.department : (user.facultyProfile ? user.facultyProfile.department : ''),
+                designation: req.body.facultyProfile.designation !== undefined ? req.body.facultyProfile.designation : (user.facultyProfile ? user.facultyProfile.designation : ''),
+                phone: req.body.facultyProfile.phone !== undefined ? req.body.facultyProfile.phone : (user.facultyProfile ? user.facultyProfile.phone : ''),
+                subjects: req.body.facultyProfile.subjects || (user.facultyProfile ? user.facultyProfile.subjects : []),
+                joinDate: user.facultyProfile ? user.facultyProfile.joinDate : null
             };
 
             // Handle Join Date
@@ -332,7 +351,6 @@ const updateFacultyProfile = async (req, res, next) => {
         }
 
         const updatedUser = await user.save();
-        console.log('[PRO-SAVE] Faculty update successful:', updatedUser.email);
 
         res.json({
             _id: updatedUser._id,
@@ -340,10 +358,51 @@ const updateFacultyProfile = async (req, res, next) => {
             email: updatedUser.email,
             role: updatedUser.role,
             profile: updatedUser.profile,
-            facultyProfile: updatedUser.facultyProfile
+            facultyProfile: updatedUser.facultyProfile,
+            token: generateToken(updatedUser._id)
         });
     } catch (error) {
         console.error('[PRO-ERROR] updateFacultyProfile failure:', error);
+        next(error);
+    }
+};
+
+// @desc    Publish Timetable for a branch/semester
+// @route   POST /api/faculty/timetable/publish
+// @access  Private/Faculty
+const publishTimetable = async (req, res, next) => {
+    try {
+        let { branch, semester } = req.body;
+
+        if (!branch || !semester) {
+            res.status(400);
+            throw new Error('Please provide branch and semester');
+        }
+
+        // Standardize: Trim inputs
+        branch = branch.trim();
+        semester = semester.trim();
+
+        // Publish all entries for this branch/semester (case-insensitive)
+        const result = await Timetable.updateMany(
+            {
+                branch: { $regex: new RegExp(`^${branch}$`, 'i') },
+                semester: { $regex: new RegExp(`^${semester}$`, 'i') }
+            },
+            { $set: { isPublished: true } }
+        );
+
+        // Notify students via Socket.io
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('timetable:published', { branch, semester });
+        }
+
+        res.json({
+            message: 'Timetable published successfully!',
+            count: result.modifiedCount
+        });
+    } catch (error) {
         next(error);
     }
 };
@@ -358,5 +417,6 @@ module.exports = {
     addTimetableSlot,
     removeTimetableSlot,
     getFacultyProfile,
-    updateFacultyProfile
+    updateFacultyProfile,
+    publishTimetable
 };

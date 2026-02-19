@@ -7,10 +7,12 @@ const {
     deleteUser,
     getDashboardStats,
     updateUser,
+    searchUsers
 } = require('../controllers/userController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.route('/').get(protect, admin, getUsers);
+router.route('/search').get(protect, searchUsers);
 router.route('/profile')
     .get(protect, getUserProfile)
     .put(protect, updateUserProfile);

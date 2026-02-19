@@ -30,9 +30,9 @@ const StudentProfile = () => {
             return;
         }
 
-        // Check file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error('Image size should be less than 5MB');
+        // Check file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error('Image size should be less than 10MB');
             return;
         }
 
@@ -230,7 +230,7 @@ const StudentProfile = () => {
                                     value={formData.branch}
                                     onChange={handleChange}
                                     className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/5 rounded-2xl text-white font-semibold transition-all focus:bg-white/[0.05] focus:border-primary/50 outline-none placeholder:text-gray-700"
-                                    placeholder="e.g., Computer Science"
+                                    placeholder="e.g. CSE"
                                 />
                             </div>
                         </div>

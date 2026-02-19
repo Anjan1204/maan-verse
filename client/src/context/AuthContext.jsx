@@ -4,16 +4,12 @@ import api from '../utils/api';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
+    const [user, setUser] = useState(() => {
         const userInfo = localStorage.getItem('userInfo');
-        if (userInfo) {
-            setUser(JSON.parse(userInfo));
-        }
-        setLoading(false);
-    }, []);
+        return userInfo ? JSON.parse(userInfo) : null;
+    });
+    const [loading, setLoading] = useState(false);
+
 
     // Synchronize user state with localStorage whenever it changes
     const syncUser = (userData) => {
@@ -36,7 +32,10 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password, role) => {
         const { data } = await api.post('/auth/register', { name, email, password, role });
-        syncUser(data);
+
+        if (!data.pendingApproval) {
+            syncUser(data);
+        }
         return data;
     };
 

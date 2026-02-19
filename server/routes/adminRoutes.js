@@ -1,10 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { getAllAdmins, approveAdmin, getAdminProfile, updateAdminProfile } = require('../controllers/adminController');
+const {
+    getAllAdmins,
+    getPendingRegistrationRequests,
+    approveAdmin,
+    getAdminProfile,
+    updateAdminProfile,
+    rejectAdmin
+} = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
-router.route('/users').get(protect, admin, getAllAdmins);
-router.route('/approve/:id').put(protect, admin, approveAdmin);
-router.route('/profile').get(protect, admin, getAdminProfile).put(protect, admin, updateAdminProfile);
+router.get('/users', protect, admin, getAllAdmins);
+router.get('/pending-requests', protect, admin, getPendingRegistrationRequests);
+router.get('/profile', protect, admin, getAdminProfile);
+router.put('/profile', protect, admin, updateAdminProfile);
+router.put('/approve/:id', protect, admin, approveAdmin);
+router.delete('/reject/:id', protect, admin, rejectAdmin);
 
 module.exports = router;

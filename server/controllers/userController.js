@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const generateToken = require('../utils/generateToken');
 
 // @desc    Get current user profile
 // @route   GET /api/users/profile
@@ -55,11 +56,11 @@ const updateUserProfile = async (req, res, next) => {
             user.email = req.body.email;
         }
 
-        // Update Profile (Avatar/Bio) - Deep assignment to trigger Mongoose setters
+        // Update Profile (Avatar/Bio)
         if (req.body.profile) {
             user.profile = {
-                ...(user.profile ? (typeof user.profile.toObject === 'function' ? user.profile.toObject() : user.profile) : {}),
-                ...req.body.profile
+                bio: req.body.profile.bio !== undefined ? req.body.profile.bio : (user.profile ? user.profile.bio : ''),
+                avatar: req.body.profile.avatar !== undefined ? req.body.profile.avatar : (user.profile ? user.profile.avatar : '')
             };
             user.markModified('profile');
         }
@@ -67,8 +68,12 @@ const updateUserProfile = async (req, res, next) => {
         // Update Role-Specific Profiles
         if (user.role === 'student' && req.body.studentProfile) {
             user.studentProfile = {
-                ...(user.studentProfile ? (typeof user.studentProfile.toObject === 'function' ? user.studentProfile.toObject() : user.studentProfile) : {}),
-                ...req.body.studentProfile
+                rollNo: req.body.studentProfile.rollNo !== undefined ? req.body.studentProfile.rollNo : (user.studentProfile ? user.studentProfile.rollNo : ''),
+                branch: req.body.studentProfile.branch !== undefined ? req.body.studentProfile.branch : (user.studentProfile ? user.studentProfile.branch : ''),
+                semester: req.body.studentProfile.semester !== undefined ? req.body.studentProfile.semester : (user.studentProfile ? user.studentProfile.semester : ''),
+                phone: req.body.studentProfile.phone !== undefined ? req.body.studentProfile.phone : (user.studentProfile ? user.studentProfile.phone : ''),
+                address: req.body.studentProfile.address !== undefined ? req.body.studentProfile.address : (user.studentProfile ? user.studentProfile.address : ''),
+                dob: user.studentProfile ? user.studentProfile.dob : null
             };
 
             // Explicitly handle date if provided string
@@ -82,12 +87,25 @@ const updateUserProfile = async (req, res, next) => {
             }
 
             user.markModified('studentProfile');
-            console.log('[PRO-SAVE] Student profile changes prepared:', user.studentProfile);
         } else if (user.role === 'faculty' && req.body.facultyProfile) {
             user.facultyProfile = {
-                ...(user.facultyProfile ? (typeof user.facultyProfile.toObject === 'function' ? user.facultyProfile.toObject() : user.facultyProfile) : {}),
-                ...req.body.facultyProfile
+                employeeId: req.body.facultyProfile.employeeId !== undefined ? req.body.facultyProfile.employeeId : (user.facultyProfile ? user.facultyProfile.employeeId : ''),
+                department: req.body.facultyProfile.department !== undefined ? req.body.facultyProfile.department : (user.facultyProfile ? user.facultyProfile.department : ''),
+                designation: req.body.facultyProfile.designation !== undefined ? req.body.facultyProfile.designation : (user.facultyProfile ? user.facultyProfile.designation : ''),
+                phone: req.body.facultyProfile.phone !== undefined ? req.body.facultyProfile.phone : (user.facultyProfile ? user.facultyProfile.phone : ''),
+                subjects: req.body.facultyProfile.subjects || (user.facultyProfile ? user.facultyProfile.subjects : []),
+                joinDate: user.facultyProfile ? user.facultyProfile.joinDate : null
             };
+
+            if (req.body.facultyProfile.joinDate) {
+                const joinDateObj = new Date(req.body.facultyProfile.joinDate);
+                if (!isNaN(joinDateObj.getTime())) {
+                    user.facultyProfile.joinDate = joinDateObj;
+                }
+            } else if (req.body.facultyProfile.joinDate === '') {
+                user.facultyProfile.joinDate = null;
+            }
+
             user.markModified('facultyProfile');
         }
 
@@ -107,7 +125,8 @@ const updateUserProfile = async (req, res, next) => {
             studentProfile: updatedUser.studentProfile,
             facultyProfile: updatedUser.facultyProfile,
             attendance: updatedUser.attendance,
-            isActive: updatedUser.isActive
+            isActive: updatedUser.isActive,
+            token: generateToken(updatedUser._id)
         });
     } catch (error) {
         console.error('[PRO-ERROR] updateUserProfile failure:', error);
@@ -270,4 +289,27 @@ const getDashboardStats = async (req, res, next) => {
     }
 };
 
-module.exports = { getUserProfile, updateUserProfile, getUsers, deleteUser, getDashboardStats, updateUser };
+// @desc    Search for users (limited fields)
+// @route   GET /api/users/search
+// @access  Private
+const searchUsers = async (req, res, next) => {
+    try {
+        const { query, role } = req.query;
+        const filter = {
+            $or: [
+                { name: { $regex: query, $options: 'i' } },
+                { email: { $regex: query, $options: 'i' } }
+            ]
+        };
+        if (role) filter.role = role;
+
+        const users = await User.find(filter)
+            .select('name email role studentProfile.rollNo facultyProfile.employeeId')
+            .limit(10);
+        res.json(users);
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { getUserProfile, updateUserProfile, getUsers, deleteUser, getDashboardStats, updateUser, searchUsers };

@@ -18,7 +18,6 @@ const authUser = async (req, res, next) => {
 
         if (user && (await user.matchPassword(password))) {
             // Check if user is admin
-            // Check if user is admin
             if (user.role === 'admin') {
                 if (!user.isApproved) {
                     res.status(403);
@@ -26,7 +25,7 @@ const authUser = async (req, res, next) => {
                 }
             }
 
-            // Normal login (Student/Faculty or First Admin)
+            // Normal login
             res.json({
                 _id: user._id,
                 name: user.name,
@@ -39,6 +38,11 @@ const authUser = async (req, res, next) => {
                 token: generateToken(user._id),
             });
         } else {
+            const pendingRequest = await AdminRegistrationRequest.findOne({ email });
+            if (pendingRequest) {
+                res.status(403);
+                throw new Error('Your admin registration is still pending approval. Please wait for the main admin to approve your account.');
+            }
             res.status(401);
             throw new Error('Invalid email or password');
         }
@@ -46,6 +50,8 @@ const authUser = async (req, res, next) => {
         next(error);
     }
 };
+
+const AdminRegistrationRequest = require('../models/AdminRegistrationRequest');
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -55,22 +61,51 @@ const registerUser = async (req, res, next) => {
         const { name, email, password, role } = req.body;
 
         const userExists = await User.findOne({ email });
-
         if (userExists) {
             res.status(400);
             throw new Error('User already exists');
         }
 
+        const requestExists = await AdminRegistrationRequest.findOne({ email });
+        if (requestExists) {
+            res.status(400);
+            throw new Error('An admin registration request for this email is already pending approval');
+        }
+
         let isMainAdmin = false;
-        let isApproved = true; // Default true for non-admins
+        let requiresApproval = false;
 
         if (role === 'admin') {
             const adminCount = await User.countDocuments({ role: 'admin' });
             if (adminCount === 0) {
                 isMainAdmin = true;
-                isApproved = true;
             } else {
-                isApproved = false;
+                requiresApproval = true;
+            }
+        }
+
+        if (requiresApproval) {
+            const registrationRequest = await AdminRegistrationRequest.create({
+                name,
+                email,
+                password,
+                role: 'admin'
+            });
+
+            if (registrationRequest) {
+                const io = req.app.get('io');
+                if (io) {
+                    io.emit('admin:approval_request', {
+                        _id: registrationRequest._id,
+                        name: registrationRequest.name,
+                        email: registrationRequest.email
+                    });
+                }
+
+                return res.status(201).json({
+                    message: 'Registration successful! Your account is pending approval by the main admin.',
+                    pendingApproval: true
+                });
             }
         }
 
@@ -80,7 +115,7 @@ const registerUser = async (req, res, next) => {
             password,
             role: role || 'student',
             isMainAdmin,
-            isApproved
+            isApproved: true // Direct creation means it's approved (or doesn't need it)
         });
 
         if (user) {

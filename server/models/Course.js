@@ -59,6 +59,11 @@ const courseSchema = mongoose.Schema({
     requirements: [{
         type: String
     }],
+    resources: [{
+        title: { type: String, required: true },
+        url: { type: String, required: true },
+        type: { type: String, enum: ['PDF', 'Link', 'Video', 'Other'], default: 'PDF' }
+    }],
     enrolledCount: {
         type: Number,
         default: 0,

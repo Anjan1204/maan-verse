@@ -20,20 +20,21 @@ const FacultyStudents = () => {
                 const { data } = await api.get('/faculty/students');
                 setStudents(data);
             } catch (error) {
-                console.error("Failed to fetch students");
+                console.error("Failed to fetch students", error);
             } finally {
                 setLoading(false);
             }
         };
         fetchStudents();
+        fetchSubjects();
     }, []);
 
     const fetchSubjects = async () => {
         setLoadingSubjects(true);
         try {
             const { data } = await api.get('/faculty/classes');
-            setSubjects(data);
         } catch (error) {
+            console.error("Failed to load subjects", error);
             toast.error("Failed to load subjects");
         } finally {
             setLoadingSubjects(false);

@@ -13,7 +13,6 @@ const createEmailTransporter = async () => {
     }
 
     // FULLY AUTOMATIC FALLBACK: Create a test account if no credentials provided
-    console.log('⚠️ No Gmail credentials provided. Creating a temporary test account...');
     const testAccount = await nodemailer.createTestAccount();
     return nodemailer.createTransport({
         host: 'smtp.ethereal.email',
@@ -37,8 +36,6 @@ const sendEmail = async (options) => {
         };
 
         const info = await transporter.sendMail(mailOptions);
-
-        console.log(`Email sent to: ${options.email}`);
 
         // If using test account, log the URL to view the email
         const previewUrl = nodemailer.getTestMessageUrl(info);

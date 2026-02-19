@@ -5,10 +5,14 @@ import {
     PlayCircle, FileText, CheckCircle, ChevronRight, Lock,
     ArrowLeft, BookOpen, Clock, Award, Menu, X, Loader2,
     HelpCircle, ChevronLeft, Send, Sparkles, Download, Eye,
-    Target, Lightbulb, Brain
+    Target, Lightbulb, Brain, MessageSquare, Folders, ClipboardList
 } from 'lucide-react';
 import api from '../../utils/api';
 import { toast } from 'react-toastify';
+import ResourceSection from '../../components/course/ResourceSection';
+import AssignmentSection from '../../components/course/AssignmentSection';
+import { generateCertificate } from '../../utils/certificateGenerator';
+import AITutor from '../../components/AITutor';
 
 const QuizComponent = ({ topic, topicQuestions, onComplete }) => {
     const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -173,6 +177,21 @@ const CourseContentPage = () => {
         }
     };
 
+    const handleClaimCertificate = async () => {
+        if (!enrollment || enrollment.progress < 100) return;
+
+        try {
+            const user = JSON.parse(localStorage.getItem('userInfo'));
+            const date = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+            const certificateId = `CRT-${courseId.slice(-6)}-${user._id.slice(-6)}`.toUpperCase();
+
+            await generateCertificate(user.name, course.title, date, certificateId);
+            toast.success('Certificate generated successfully!');
+        } catch (error) {
+            toast.error('Failed to generate certificate');
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-dark">
@@ -190,6 +209,10 @@ const CourseContentPage = () => {
         { id: 'video', label: 'Watch Lesson', icon: PlayCircle },
         { id: 'material', label: 'Study Material', icon: FileText },
         { id: 'quiz', label: 'Interactive Quiz', icon: HelpCircle },
+        { id: 'forum', label: 'Discussion Forum', icon: MessageSquare },
+        { id: 'resources', label: 'Extra Resources', icon: Folders },
+        { id: 'assignments', label: 'Assignments', icon: ClipboardList },
+        { id: 'ai-tutor', label: 'AI Tutor', icon: Sparkles },
     ];
 
     const topic = activeChapter?.title || '';
@@ -236,6 +259,14 @@ const CourseContentPage = () => {
                                     className="h-full bg-gradient-to-r from-primary to-secondary shadow-[0_0_15px_rgba(99,102,241,0.5)]"
                                 />
                             </div>
+                            {enrollment?.progress === 100 && (
+                                <button
+                                    onClick={handleClaimCertificate}
+                                    className="w-full py-3 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Award size={14} /> Claim Certificate
+                                </button>
+                            )}
                         </div>
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
@@ -483,6 +514,22 @@ const CourseContentPage = () => {
                                         topicQuestions={activeChapter.quiz}
                                         onComplete={handleProgressUpdate}
                                     />
+                                )}
+
+                                {activeTab === 'forum' && (
+                                    <ForumSection courseId={courseId} />
+                                )}
+
+                                {activeTab === 'resources' && (
+                                    <ResourceSection resources={course.resources} />
+                                )}
+
+                                {activeTab === 'assignments' && (
+                                    <AssignmentSection courseId={courseId} />
+                                )}
+
+                                {activeTab === 'ai-tutor' && (
+                                    <AITutor courseTitle={course.title} />
                                 )}
                             </motion.div>
                         </>

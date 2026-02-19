@@ -25,16 +25,11 @@ const AdminSettings = () => {
         notificationFrequency: 'immediate'
     };
 
-    const [settings, setSettings] = useState(defaultSettings);
-    const [hasChanges, setHasChanges] = useState(false);
-
-    useEffect(() => {
-        // Load settings from localStorage
+    const [settings, setSettings] = useState(() => {
         const savedSettings = localStorage.getItem('adminSettings');
-        if (savedSettings) {
-            setSettings(JSON.parse(savedSettings));
-        }
-    }, []);
+        return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+    });
+    const [hasChanges, setHasChanges] = useState(false);
 
     const handleChange = (key, value) => {
         setSettings(prev => ({ ...prev, [key]: value }));

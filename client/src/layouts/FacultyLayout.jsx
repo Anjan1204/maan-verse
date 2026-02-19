@@ -11,7 +11,13 @@ import {
     ChevronRight,
     Award,
     Bell,
-    User
+    User,
+    ClipboardList,
+    Folders,
+    MessageSquare,
+    ClipboardPen,
+    DollarSign,
+    BarChart2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from '../components/NotificationDropdown';
@@ -33,7 +39,13 @@ const FacultyLayout = () => {
         { name: 'Profile', href: '/faculty/profile', icon: User },
         { name: 'My Classes', href: '/faculty/classes', icon: BookOpen },
         { name: 'Attendance', href: '/faculty/attendance', icon: CheckSquare },
-        { name: 'Timetable', href: '/faculty/timetable', icon: Calendar },
+        { name: 'Analytics', href: '/faculty/analytics', icon: BarChart2 },
+        { name: 'Assignments', href: '/faculty/assignments', icon: ClipboardList },
+        { name: 'Resources', href: '/faculty/resources', icon: Folders },
+        { name: 'Messaging', href: '/faculty/messaging', icon: MessageSquare },
+        { name: 'Leave Requests', href: '/faculty/leave', icon: ClipboardPen, category: 'Academic' },
+        { name: 'My Payroll', href: '/faculty/payroll', icon: DollarSign, category: 'Personal' },
+        { name: 'Notices', href: '/faculty/notices', icon: Bell, category: 'Support' },
         { name: 'Students', href: '/faculty/students', icon: Users },
         { name: 'Grades', href: '/faculty/grades', icon: Award },
     ];
@@ -73,7 +85,7 @@ const FacultyLayout = () => {
                 )}
 
                 {/* Nav Items */}
-                <nav className="flex-1 py-6 space-y-1.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-slate-500">
+                <nav className="flex-1 py-6 space-y-1.5 px-4 font-semibold uppercase tracking-wider text-[10px] text-slate-500 overflow-y-auto scrollbar-hide">
                     {isSidebarOpen && <div className="px-2 mb-2">Academic</div>}
                     {navigation.map((item) => {
                         const isActive = location.pathname === item.href;
@@ -98,16 +110,21 @@ const FacultyLayout = () => {
                             </Link>
                         );
                     })}
+                    <button
+                        onClick={handleLogout}
+                        className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group text-slate-400 hover:bg-red-500/10 hover:text-red-500 capitalize text-sm font-medium w-full mt-1`}
+                    >
+                        <LogOut size={20} className="text-slate-500 group-hover:text-red-500" />
+                        {isSidebarOpen && (
+                            <span className="whitespace-nowrap overflow-hidden transition-all duration-300">
+                                Logout
+                            </span>
+                        )}
+                    </button>
                 </nav>
 
                 <div className="p-4 border-t border-white/5 text-gray-400">
-                    <button
-                        onClick={handleLogout}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors ${!isSidebarOpen && 'justify-center'}`}
-                    >
-                        <LogOut size={20} />
-                        {isSidebarOpen && <span>Logout</span>}
-                    </button>
+                    <p className="text-[10px] text-center uppercase tracking-widest opacity-30">© 2026 MAAN-verse</p>
                 </div>
             </motion.aside>
 

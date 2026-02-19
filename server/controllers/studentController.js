@@ -101,12 +101,20 @@ const getStudentDashboard = async (req, res, next) => {
 const getTimetable = async (req, res, next) => {
     try {
         const student = await User.findById(req.user._id);
-        const branch = student.studentProfile?.branch || 'CSE';
-        const semester = student.studentProfile?.semester || '1st';
+        const { branch, semester } = student.studentProfile || {};
+        const rawBranch = (branch || '').trim() || 'CSE';
+        const rawSemester = (semester || '').trim() || '1'; // Default to '1' instead of '1st'
 
-        const timetable = await Timetable.find({ branch, semester });
+        // Use regex for flexible, case-insensitive matching
+        const timetable = await Timetable.find({
+            branch: { $regex: new RegExp(`^${rawBranch}$`, 'i') },
+            semester: { $regex: new RegExp(`^${rawSemester}$`, 'i') },
+            isPublished: true
+        });
+
         res.json(timetable);
     } catch (error) {
+        console.error('[TT-FETCH-ERROR]', error);
         next(error);
     }
 };

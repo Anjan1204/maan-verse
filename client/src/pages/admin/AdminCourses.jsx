@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import api from '../../utils/api';
 import { Search, Plus, Edit, Trash2, Eye, EyeOff, X } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
@@ -20,7 +20,7 @@ const AdminCourses = () => {
 
     const categories = ['Development', 'Design', 'Business', 'Data Science', 'Marketing', 'Photography', 'Music', 'AI & ML'];
 
-    const fetchCourses = async () => {
+    const fetchCourses = useCallback(async () => {
         setLoading(true);
         try {
             const { data } = await api.get(`/courses/admin/all?keyword=${search}`);
@@ -30,11 +30,11 @@ const AdminCourses = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [search]);
 
     useEffect(() => {
         fetchCourses();
-    }, [search]);
+    }, [fetchCourses]);
 
     const handleCreate = () => {
         setEditingCourse(null);

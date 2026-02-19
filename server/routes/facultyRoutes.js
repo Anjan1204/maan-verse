@@ -10,7 +10,8 @@ const {
     addTimetableSlot,
     removeTimetableSlot,
     getFacultyProfile,
-    updateFacultyProfile
+    updateFacultyProfile,
+    publishTimetable
 } = require('../controllers/facultyController');
 const { protect, faculty } = require('../middleware/authMiddleware'); // Assuming we have 'faculty' middleware or check role in controller
 
@@ -31,6 +32,7 @@ router.post('/attendance', protect, facultyCheck, markAttendance);
 router.get('/students', protect, facultyCheck, getStudentsForClass);
 router.post('/subjects', protect, facultyCheck, updateMySubjects);
 router.get('/timetable', protect, facultyCheck, getFacultyTimetable);
+router.post('/timetable/publish', protect, facultyCheck, publishTimetable);
 router.post('/timetable', protect, facultyCheck, addTimetableSlot);
 router.delete('/timetable/:id', protect, facultyCheck, removeTimetableSlot);
 router.get('/profile', protect, facultyCheck, getFacultyProfile);

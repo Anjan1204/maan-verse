@@ -2,24 +2,26 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
-    BookOpen,
     Calendar,
     Clock,
     Bell,
     User,
     LogOut,
     Menu,
-    ChevronRight,
     GraduationCap,
-    FileText
+    FileText,
+    MessageSquare,
+    ClipboardPen,
+    BarChart2,
+    DollarSign
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationDropdown from '../components/NotificationDropdown';
 import { motion, AnimatePresence } from 'framer-motion';
+import AITutor from '../components/AITutor';
 
 const StudentLayout = () => {
     const { logout, user } = useAuth();
-    console.log("DEBUG: StudentLayout rendering. User:", user);
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setSidebarOpen] = useState(true);
@@ -34,7 +36,11 @@ const StudentLayout = () => {
         { name: 'My Profile', href: '/student/profile', icon: User, category: 'Personal' },
         { name: 'Attendance', href: '/student/attendance', icon: Calendar, category: 'Academic' },
         { name: 'Timetable', href: '/student/timetable', icon: Clock, category: 'Academic' },
+        { name: 'Analytics', href: '/student/analytics', icon: BarChart2, category: 'Academic' },
         { name: 'Exams & Results', href: '/student/exams', icon: FileText, category: 'Academic' },
+        { name: 'Messaging', href: '/student/messaging', icon: MessageSquare, category: 'Support' },
+        { name: 'My Fees', href: '/student/fees', icon: DollarSign, category: 'Personal' },
+        { name: 'Apply Leave', href: '/student/leave', icon: ClipboardPen, category: 'Support' },
         { name: 'Notices', href: '/student/notices', icon: Bell, category: 'Support' },
     ];
 
@@ -205,6 +211,11 @@ const StudentLayout = () => {
                     <Outlet />
                 </main>
             </div>
+
+            {/* Floating AI Tutor Widget */}
+            <AITutor />
+
+
         </div>
     );
 };
