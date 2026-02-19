@@ -49,6 +49,16 @@ const userSchema = mongoose.Schema({
         subjects: [String], // Array of subject names
         phone: String,
         joinDate: Date,
+        baseSalary: {
+            type: Number,
+            default: 0
+        },
+        bankDetails: {
+            accountNumber: String,
+            bankName: String,
+            ifscCode: String,
+            accountHolderName: String,
+        }
     },
     // Detailed Admin Profile
     adminProfile: {

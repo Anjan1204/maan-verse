@@ -1,30 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useSocket } from '../../context/SocketContext';
 import { Download } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { generatePayslipPDF } from '../../utils/payslipGenerator';
 
 const FacultyPayroll = () => {
     const { user } = useAuth();
+    const socket = useSocket();
     const [payrolls, setPayrolls] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchPayroll = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll/faculty/${user._id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setPayrolls(data);
-                setLoading(false);
-            } catch (error) {
-                console.error(error);
-                setLoading(false);
-            }
-        };
+    const fetchPayroll = async () => {
+        try {
+            const { data } = await api.get(`/payroll/faculty/${user._id}`);
+            setPayrolls(data);
+            setLoading(false);
+        } catch (error) {
+            console.error(error);
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         if (user?._id) fetchPayroll();
     }, [user]);
+
+    useEffect(() => {
+        if (socket && user?._id) {
+            socket.on('payroll:created', (newPayroll) => {
+                // If the new payroll belongs to this faculty
+                if (newPayroll.faculty === user._id) {
+                    setPayrolls(prev => [newPayroll, ...prev]);
+                    toast.success(`New payroll generated for ${newPayroll.month}!`);
+                }
+            });
+
+            socket.on('payroll:updated', (updatedPayroll) => {
+                // Handle both populated and non-populated faculty ID
+                const facultyId = updatedPayroll.faculty._id || updatedPayroll.faculty;
+                if (facultyId === user._id) {
+                    setPayrolls(prev => prev.map(p => p._id === updatedPayroll._id ? updatedPayroll : p));
+                    toast.info(`Payroll for ${updatedPayroll.month} has been ${updatedPayroll.status}`);
+                }
+            });
+
+            socket.on('payroll:bulk_generated', () => {
+                fetchPayroll();
+            });
+
+            return () => {
+                socket.off('payroll:created');
+                socket.off('payroll:updated');
+                socket.off('payroll:bulk_generated');
+            };
+        }
+    }, [socket, user]);
 
     return (
         <div className="space-y-6">
@@ -51,7 +83,10 @@ const FacultyPayroll = () => {
                                 </div>
                             </div>
                         </div>
-                        <button className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-colors flex items-center gap-2">
+                        <button
+                            onClick={() => generatePayslipPDF(payrolls[0], user)}
+                            className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-colors flex items-center gap-2"
+                        >
                             <Download size={20} />
                             Download Payslip
                         </button>
@@ -89,7 +124,10 @@ const FacultyPayroll = () => {
                                     <td className="p-4 font-bold text-indigo-400">${payroll.netSalary.toLocaleString()}</td>
                                     <td className="p-4 text-slate-500">{new Date(payroll.createdAt).toLocaleDateString()}</td>
                                     <td className="p-4 text-right">
-                                        <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white">
+                                        <button
+                                            onClick={() => generatePayslipPDF(payroll, user)}
+                                            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
+                                        >
                                             <Download size={16} />
                                         </button>
                                     </td>

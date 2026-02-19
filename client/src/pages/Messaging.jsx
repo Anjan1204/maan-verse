@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Send, User, MessageCircle, Search, Clock, Check, CheckCheck } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { toast, ToastContainer } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -15,20 +16,49 @@ const Messaging = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [allUsers, setAllUsers] = useState([]);
     const [showUserSearch, setShowUserSearch] = useState(false);
+    const socket = useSocket();
 
     useEffect(() => {
         fetchConversations();
-        fetchAllUsers();
     }, []);
+
+    useEffect(() => {
+        if (!searchQuery) {
+            setAllUsers([]);
+            return;
+        }
+        const delayDebounceFn = setTimeout(() => {
+            fetchAllUsers();
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery]);
 
     useEffect(() => {
         if (activeConversation) {
             fetchMessages(activeConversation._id);
-            // Polling for new messages (In a real app, use Socket.io)
-            const interval = setInterval(() => fetchMessages(activeConversation._id), 3000);
-            return () => clearInterval(interval);
+
+            if (socket) {
+                socket.emit('join:conversation', activeConversation._id);
+
+                socket.on('message:received', (msg) => {
+                    if (msg.conversation === activeConversation._id) {
+                        setMessages(prev => {
+                            // Prevent duplicate messages if already added from send response
+                            if (prev.find(m => m._id === msg._id)) return prev;
+                            return [...prev, msg];
+                        });
+                        // Update conversations list to show last message
+                        fetchConversations();
+                    }
+                });
+
+                return () => {
+                    socket.off('message:received');
+                };
+            }
         }
-    }, [activeConversation]);
+    }, [activeConversation, socket]);
 
     const fetchConversations = async () => {
         try {
@@ -42,7 +72,6 @@ const Messaging = () => {
     };
 
     const fetchAllUsers = async () => {
-        if (!searchQuery) return; // Only search if query exists to save bandwidth
         try {
             const { data } = await api.get(`/users/search?search=${searchQuery}`);
             setAllUsers(data.filter(u => u._id !== user._id));
@@ -71,14 +100,18 @@ const Messaging = () => {
         e.preventDefault();
         if (!newMessage.trim() || !activeConversation) return;
 
+        const content = newMessage;
+        setNewMessage('');
         try {
-            const content = newMessage;
-            setNewMessage('');
-            await api.post('/messaging/messages', {
+            const { data } = await api.post('/messaging/messages', {
                 conversationId: activeConversation._id,
                 content
             });
-            fetchMessages(activeConversation._id);
+            // Optimization: Update UI immediately
+            setMessages(prev => {
+                if (prev.find(m => m._id === data._id)) return prev;
+                return [...prev, data];
+            });
             fetchConversations();
         } catch (error) {
             toast.error('Message failed to send');
@@ -101,10 +134,13 @@ const Messaging = () => {
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-black text-white tracking-tighter">Messages</h2>
                         <button
-                            onClick={() => setShowUserSearch(!showUserSearch)}
-                            className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary transition-all hover:text-white"
+                            onClick={() => {
+                                setShowUserSearch(!showUserSearch);
+                                if (!showUserSearch) fetchAllUsers(); // Fetch suggested users when opening
+                            }}
+                            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${showUserSearch ? 'bg-primary text-white' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
                         >
-                            <MessageCircle size={20} />
+                            {showUserSearch ? 'Cancel' : 'New Chat'} <MessageCircle size={16} />
                         </button>
                     </div>
                     <div className="relative">
@@ -114,13 +150,7 @@ const Messaging = () => {
                             placeholder="Search chats..."
                             className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                             value={searchQuery}
-                            value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                // Debounce or just call it directly for now (simple)
-                                // In production use debounce
-                            }}
-                            onKeyUp={() => fetchAllUsers()}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
                 </div>
@@ -128,44 +158,77 @@ const Messaging = () => {
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                     {showUserSearch ? (
                         <div className="p-4 space-y-4">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-primary">New Conversation</p>
-                            {allUsers.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
-                                <div
-                                    key={u._id}
-                                    onClick={() => handleStartConversation(u._id)}
-                                    className="p-4 rounded-2xl hover:bg-white/5 cursor-pointer flex items-center gap-4 transition-all"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-500 font-bold uppercase">{u.name.charAt(0)}</div>
-                                    <div>
-                                        <p className="text-sm font-bold text-white">{u.name}</p>
-                                        <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">{u.role}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+                                {searchQuery ? 'Search Results' : 'Suggested People'}
+                            </p>
+                            {allUsers.length === 0 ? (
+                                <p className="text-[10px] text-gray-600 font-bold text-center py-4 italic">No users found</p>
+                            ) : (
+                                allUsers.map(u => (
+                                    <div
+                                        key={u._id}
+                                        onClick={() => handleStartConversation(u._id)}
+                                        className="p-4 rounded-2xl hover:bg-white/5 cursor-pointer flex items-center gap-4 transition-all border border-transparent hover:border-white/5"
+                                    >
+                                        <div className="w-10 h-10 rounded-full border border-white/10 shrink-0 overflow-hidden">
+                                            <img
+                                                src={u.profile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random&color=fff`}
+                                                alt=""
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-white truncate">{u.name}</p>
+                                            <p className="text-[9px] text-primary font-black uppercase tracking-[0.1em]">{u.role}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
+                        </div>
+                    ) : conversations.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-10 px-6 text-center space-y-4">
+                            <div className="p-4 bg-primary/5 rounded-full text-primary/40">
+                                <MessageCircle size={32} />
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">No active chats</p>
+                            <button
+                                onClick={() => { setShowUserSearch(true); fetchAllUsers(); }}
+                                className="text-[10px] font-black text-primary uppercase border-b border-primary/20 pb-0.5 hover:border-primary transition-all"
+                            >
+                                Start your first chat
+                            </button>
                         </div>
                     ) : (
-                        conversations.map(conv => {
-                            const other = getOtherParticipant(conv.participants);
-                            const isActive = activeConversation?._id === conv._id;
-                            return (
-                                <div
-                                    key={conv._id}
-                                    onClick={() => setActiveConversation(conv)}
-                                    className={`p-4 rounded-[1.5rem] cursor-pointer flex items-center gap-4 transition-all ${isActive ? 'bg-primary/20 border border-primary/20' : 'hover:bg-white/5 border border-transparent'}`}
-                                >
-                                    <div className="w-12 h-12 rounded-full bg-white/10 border border-white/5 flex items-center justify-center shrink-0">
-                                        <img src={other.profile?.avatar || `https://ui-avatars.com/api/?name=${other.name}&background=random`} alt="" className="w-full h-full rounded-full" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <p className="text-sm font-black text-white truncate">{other.name}</p>
-                                            <span className="text-[8px] text-gray-600 font-bold uppercase">{new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        conversations
+                            .filter(conv => {
+                                const other = getOtherParticipant(conv.participants);
+                                return other?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+                            })
+                            .map(conv => {
+                                const other = getOtherParticipant(conv.participants);
+                                const isActive = activeConversation?._id === conv._id;
+                                return (
+                                    <div
+                                        key={conv._id}
+                                        onClick={() => {
+                                            setActiveConversation(conv);
+                                            setShowUserSearch(false);
+                                        }}
+                                        className={`p-4 rounded-[1.5rem] cursor-pointer flex items-center gap-4 transition-all ${isActive ? 'bg-primary/20 border border-primary/20' : 'hover:bg-white/5 border border-transparent'}`}
+                                    >
+                                        <div className="w-12 h-12 rounded-full border border-white/5 flex items-center justify-center shrink-0 overflow-hidden">
+                                            <img src={other?.profile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(other?.name || 'User')}&background=random&color=fff`} alt="" className="w-full h-full object-cover" />
                                         </div>
-                                        <p className="text-xs text-gray-500 truncate font-medium">{conv.lastMessage || 'Start a conversation...'}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <p className="text-sm font-black text-white truncate">{other?.name || 'Unknown'}</p>
+                                                <span className="text-[8px] text-gray-600 font-bold uppercase tracking-tighter">{new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 truncate font-medium">{conv.lastMessage || 'Start a conversation...'}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })
+                                );
+                            })
                     )}
                 </div>
             </div>
@@ -178,12 +241,18 @@ const Messaging = () => {
                         <div className="p-6 border-b border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <button onClick={() => setActiveConversation(null)} className="md:hidden text-gray-500 mr-2">←</button>
-                                <div className="w-10 h-10 rounded-full border border-white/10 p-0.5">
-                                    <img src={getOtherParticipant(activeConversation.participants).profile?.avatar || `https://ui-avatars.com/api/?name=${getOtherParticipant(activeConversation.participants).name}&background=random`} className="w-full h-full rounded-full" />
+                                <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden">
+                                    <img
+                                        src={getOtherParticipant(activeConversation.participants)?.profile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(getOtherParticipant(activeConversation.participants)?.name || 'User')}&background=random&color=fff`}
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-black text-white">{getOtherParticipant(activeConversation.participants).name}</h3>
-                                    <p className="text-[9px] text-primary font-black uppercase tracking-widest">Signal Online</p>
+                                    <h3 className="text-sm font-black text-white">{getOtherParticipant(activeConversation.participants)?.name}</h3>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                                        <p className="text-[9px] text-emerald-500 font-black uppercase tracking-[0.2em]">Signal Online</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -224,11 +293,23 @@ const Messaging = () => {
                         </form>
                     </>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-4 opacity-20">
-                        <div className="w-24 h-24 rounded-full border-4 border-dashed border-white/10 flex items-center justify-center">
-                            <MessageCircle size={48} />
+                    <div className="flex-1 flex flex-col items-center justify-center p-10 text-center space-y-6">
+                        <div className="p-8 bg-white/[0.02] rounded-[3rem] border border-white/5 relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="w-24 h-24 rounded-full border-4 border-dashed border-primary/20 flex items-center justify-center relative z-10 mx-auto">
+                                <MessageCircle size={48} className="text-primary/40" />
+                            </div>
+                            <div className="mt-8 space-y-3 relative z-10">
+                                <h3 className="text-lg font-black text-white tracking-tighter">Ready to connect?</h3>
+                                <p className="text-xs text-gray-500 font-bold max-w-[240px] leading-relaxed mx-auto italic">
+                                    Click the <span className="text-primary font-black uppercase">"New Chat"</span> button in the sidebar to search for students or faculty members.
+                                </p>
+                            </div>
                         </div>
-                        <p className="text-xs font-black uppercase tracking-[0.3em] text-white">Select an Uplink to Begin</p>
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-0.5 h-12 bg-gradient-to-b from-primary/20 to-transparent"></div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/40">Select an Uplink to Begin</p>
+                        </div>
                     </div>
                 )}
             </div>

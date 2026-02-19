@@ -1,4 +1,6 @@
 const Notice = require('../models/Notice');
+const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 // @desc    Get all notices
 // @route   GET /api/notices
@@ -72,6 +74,28 @@ const createNotice = async (req, res, next) => {
             postedBy: req.user._id,
             isPublished: true
         });
+
+        // Notify Target Audience
+        const io = req.app.get('io');
+        let userFilter = {};
+        if (targetAudience === 'Student') userFilter.role = 'student';
+        else if (targetAudience === 'Faculty') userFilter.role = 'faculty';
+        // if 'All', filter remains empty (all users)
+
+        const users = await User.find(userFilter);
+        for (const u of users) {
+            // Don't notify the poster
+            if (u._id.toString() === req.user._id.toString()) continue;
+
+            const notification = await Notification.create({
+                recipient: u._id,
+                type: 'Notice',
+                title: 'New Notice Published',
+                message: title,
+                link: '/notices'
+            });
+            if (io) io.to(u._id.toString()).emit('notification:received', notification);
+        }
 
         res.status(201).json(notice);
     } catch (error) {

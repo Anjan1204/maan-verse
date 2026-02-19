@@ -63,7 +63,8 @@ const AdminUsers = () => {
         setFormData({
             name: user.name,
             email: user.email,
-            role: user.role
+            role: user.role,
+            baseSalary: user.facultyProfile?.baseSalary || ''
         });
         setIsEditModalOpen(true);
     };
@@ -71,7 +72,20 @@ const AdminUsers = () => {
     const handleUpdateUser = async (e) => {
         e.preventDefault();
         try {
-            await api.put(`/users/${editingUser._id}`, formData);
+            const updatePayload = {
+                name: formData.name,
+                email: formData.email,
+                role: formData.role,
+            };
+
+            if (formData.role === 'faculty') {
+                updatePayload.facultyProfile = {
+                    ...editingUser.facultyProfile,
+                    baseSalary: Number(formData.baseSalary)
+                };
+            }
+
+            await api.put(`/users/${editingUser._id}`, updatePayload);
             toast.success('User updated successfully');
             setIsEditModalOpen(false);
             setEditingUser(null);
@@ -329,6 +343,18 @@ const AdminUsers = () => {
                                     <option value="admin">Admin</option>
                                 </select>
                             </div>
+                            {formData.role === 'faculty' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-2">Base Salary ($)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.baseSalary || ''}
+                                        onChange={(e) => setFormData({ ...formData, baseSalary: e.target.value })}
+                                        className="w-full bg-white border border-gray-300 text-gray-900 px-4 py-2 rounded-lg focus:outline-none focus:border-indigo-500"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            )}
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="submit"

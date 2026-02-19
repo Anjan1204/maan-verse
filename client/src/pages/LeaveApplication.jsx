@@ -10,7 +10,7 @@ const LeaveApplication = () => {
     const [leaves, setLeaves] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showApply, setShowApply] = useState(false);
-    const [view, setView] = useState('user'); // 'user' or 'admin'
+    const [view, setView] = useState(user?.role === 'admin' ? 'admin' : 'user');
 
     const [formData, setFormData] = useState({
         type: 'Sick Leave',
@@ -19,25 +19,37 @@ const LeaveApplication = () => {
         reason: ''
     });
 
-    const [adminRemark, setAdminRemark] = useState('');
+    const [adminRemarks, setAdminRemarks] = useState({});
 
     useEffect(() => {
-        if (user?.role === 'admin') setView('admin');
-        fetchLeaves();
-    }, [view]);
+        let isMounted = true;
 
-    const fetchLeaves = async () => {
-        try {
-            const endpoint = view === 'admin' ? '/leave/admin' : '/leave/my';
-            const { data } = await api.get(endpoint);
-            setLeaves(data);
-        } catch (error) {
-            console.error("Leave Sync Error:", error.response?.data || error.message);
-            toast.error(error.response?.data?.message || 'Failed to sync leave records');
-        } finally {
-            setLoading(false);
-        }
-    };
+        const fetchLeaves = async () => {
+            setLoading(true);
+            try {
+                const endpoint = view === 'admin' ? '/leave/admin' : '/leave/my';
+                const { data } = await api.get(endpoint);
+                if (isMounted) {
+                    setLeaves(data);
+                }
+            } catch (error) {
+                console.error("Leave Sync Error:", error.response?.data || error.message);
+                if (isMounted) {
+                    toast.error(error.response?.data?.message || 'Failed to sync leave records');
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchLeaves();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [view]);
 
     const handleApply = async (e) => {
         e.preventDefault();
@@ -46,7 +58,9 @@ const LeaveApplication = () => {
             toast.success('Leave application broadcasted');
             setShowApply(false);
             setFormData({ type: 'Sick Leave', startDate: '', endDate: '', reason: '' });
-            fetchLeaves();
+            // Manual refresh since we're already in 'user' view
+            const { data } = await api.get('/leave/my');
+            setLeaves(data);
         } catch (error) {
             toast.error('Application failed to transmit');
         }
@@ -54,10 +68,16 @@ const LeaveApplication = () => {
 
     const handleAction = async (id, status) => {
         try {
-            await api.put(`/leave/${id}/status`, { status, adminRemark });
+            await api.put(`/leave/${id}/status`, { status, adminRemark: adminRemarks[id] || '' });
             toast.success(`Leave ${status} successfully`);
-            setAdminRemark('');
-            fetchLeaves();
+            setAdminRemarks(prev => {
+                const next = { ...prev };
+                delete next[id];
+                return next;
+            });
+            // Refresh list
+            const { data } = await api.get('/leave/admin');
+            setLeaves(data);
         } catch (error) {
             toast.error('Decision failed to sync');
         }
@@ -175,8 +195,8 @@ const LeaveApplication = () => {
                                                 type="text"
                                                 placeholder="Remark..."
                                                 className="bg-white/5 border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-primary/30"
-                                                value={adminRemark}
-                                                onChange={e => setAdminRemark(e.target.value)}
+                                                value={adminRemarks[leave._id] || ''}
+                                                onChange={e => setAdminRemarks(prev => ({ ...prev, [leave._id]: e.target.value }))}
                                             />
                                             <div className="flex gap-2">
                                                 <button onClick={() => handleAction(leave._id, 'Approved')} className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest">Approve</button>

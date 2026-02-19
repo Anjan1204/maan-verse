@@ -1,4 +1,6 @@
 const LeaveRequest = require('../models/LeaveRequest');
+const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 // @desc    Apply for leave
 // @route   POST /api/leave
@@ -14,6 +16,21 @@ const applyLeave = async (req, res, next) => {
             endDate,
             reason
         });
+
+        // Notify Admins
+        const admins = await User.find({ role: 'admin' });
+        const io = req.app.get('io');
+        for (const admin of admins) {
+            const notification = await Notification.create({
+                recipient: admin._id,
+                type: 'Leave',
+                title: 'New Leave Request',
+                message: `${req.user.name} (${req.user.role}) has applied for leave.`,
+                link: '/leave'
+            });
+            if (io) io.to(admin._id.toString()).emit('notification:received', notification);
+        }
+
         res.status(201).json(leave);
     } catch (error) {
         next(error);
@@ -65,6 +82,18 @@ const updateLeaveStatus = async (req, res, next) => {
         leave.approvedBy = req.user._id;
 
         await leave.save();
+
+        // Notify User
+        const io = req.app.get('io');
+        const notification = await Notification.create({
+            recipient: leave.user,
+            type: 'Leave',
+            title: 'Leave Status Updated',
+            message: `Your leave request has been ${status}.`,
+            link: '/leave'
+        });
+        if (io) io.to(leave.user.toString()).emit('notification:received', notification);
+
         res.json(leave);
     } catch (error) {
         next(error);

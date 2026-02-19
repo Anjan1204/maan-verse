@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search,
@@ -15,8 +15,13 @@ import {
     ChevronDown,
     Loader2,
     TrendingUp,
-    CreditCard
+    CreditCard,
+    Briefcase,
+    Hash
 } from 'lucide-react';
+import { generatePayslipPDF } from '../../utils/payslipGenerator';
+import { useSocket } from '../../context/SocketContext';
+import { toast } from 'react-toastify';
 
 const AdminPayroll = () => {
     const [payrolls, setPayrolls] = useState([]);
@@ -24,6 +29,8 @@ const AdminPayroll = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('single'); // 'single' or 'bulk'
+
+    const socket = useSocket();
 
     const [facultySearch, setFacultySearch] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -38,20 +45,50 @@ const AdminPayroll = () => {
         deductions: '0'
     });
 
+    const [selectedEntry, setSelectedEntry] = useState(null);
+    const [showDisburseModal, setShowDisburseModal] = useState(false);
+    const [disburseData, setDisburseData] = useState({
+        transactionId: '',
+        paymentMethod: 'Bank Transfer'
+    });
+
     useEffect(() => {
         fetchPayrolls();
     }, []);
 
+    useEffect(() => {
+        if (socket) {
+            socket.on('payroll:created', (newPayroll) => {
+                setPayrolls(prev => [newPayroll, ...prev.filter(p => p._id !== newPayroll._id)]);
+                toast.success('New payroll generated!');
+            });
+
+            socket.on('payroll:updated', (updatedPayroll) => {
+                setPayrolls(prev => prev.map(p => p._id === updatedPayroll._id ? updatedPayroll : p));
+                toast.info(`Payroll for ${updatedPayroll.faculty?.name} updated to ${updatedPayroll.status}`);
+            });
+
+            socket.on('payroll:bulk_generated', ({ count, month }) => {
+                fetchPayrolls();
+                toast.success(`Bulk payroll for ${month} generated for ${count} faculty members`);
+            });
+
+            return () => {
+                socket.off('payroll:created');
+                socket.off('payroll:updated');
+                socket.off('payroll:bulk_generated');
+            };
+        }
+    }, [socket]);
+
     const fetchPayrolls = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const { data } = await api.get('/payroll');
             setPayrolls(data);
         } catch (error) {
             console.error(error);
+            toast.error('Failed to fetch payrolls');
         } finally {
             setLoading(false);
         }
@@ -65,10 +102,7 @@ const AdminPayroll = () => {
         }
         setSearching(true);
         try {
-            const token = localStorage.getItem('token');
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/search?query=${val}&role=faculty`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const { data } = await api.get(`/users/search?query=${val}&role=faculty`);
             setSearchResults(data);
         } catch (error) {
             console.error(error);
@@ -77,20 +111,33 @@ const AdminPayroll = () => {
         }
     };
 
+    const selectFaculty = (faculty) => {
+        setSelectedFaculty(faculty);
+        setFacultySearch(faculty.name);
+        setSearchResults([]);
+        setFormData(prev => ({
+            ...prev,
+            facultyId: faculty._id,
+            baseSalary: faculty.facultyProfile?.baseSalary || ''
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            const token = localStorage.getItem('token');
-            const url = modalType === 'single'
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll/bulk`;
 
+        if (modalType === 'single' && !selectedFaculty) {
+            return toast.warning('Please select a faculty member from the search results');
+        }
+
+        try {
+            const url = modalType === 'single' ? '/payroll' : '/payroll/bulk';
             const payload = modalType === 'single'
                 ? { ...formData, facultyId: selectedFaculty?._id }
                 : formData;
 
-            await axios.post(url, payload, { headers: { Authorization: `Bearer ${token}` } });
+            await api.post(url, payload);
 
+            toast.success(modalType === 'single' ? 'Payroll generated successfully' : 'Bulk payroll processing started');
             setShowModal(false);
             setFormData({ facultyId: '', month: '', baseSalary: '', bonuses: '0', deductions: '0' });
             setSelectedFaculty(null);
@@ -98,22 +145,26 @@ const AdminPayroll = () => {
             fetchPayrolls();
         } catch (error) {
             console.error(error);
-            alert(error.response?.data?.message || 'Error generating payroll.');
+            toast.error(error.response?.data?.message || 'Error generating payroll.');
         }
     };
 
-    const markAsPaid = async (id) => {
-        if (!window.confirm('Mark this payroll as PAID?')) return;
+    const handleDisburse = async (e) => {
+        e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            await axios.put(
-                `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/payroll/${id}`,
-                { status: 'Paid' },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await api.put(`/payroll/${selectedEntry._id}`, {
+                status: 'Paid',
+                transactionId: disburseData.transactionId,
+                paymentMethod: disburseData.paymentMethod
+            });
+            toast.success('Disbursement recorded successfully!');
+            setShowDisburseModal(false);
+            setSelectedEntry(null);
+            setDisburseData({ transactionId: '', paymentMethod: 'Bank Transfer' });
             fetchPayrolls();
         } catch (error) {
             console.error(error);
+            toast.error('Failed to update payroll status');
         }
     };
 
@@ -197,9 +248,6 @@ const AdminPayroll = () => {
                             className="w-full bg-slate-950 border border-white/10 rounded-2xl pl-12 pr-4 py-3.5 text-white font-medium focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-700"
                         />
                     </div>
-                    <button className="p-3 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-colors text-slate-400 border border-white/5">
-                        <Download size={20} />
-                    </button>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -208,18 +256,16 @@ const AdminPayroll = () => {
                             <tr className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] border-b border-white/5">
                                 <th className="p-6">Faculty</th>
                                 <th className="p-6">Month</th>
-                                <th className="p-6">Base Salary</th>
-                                <th className="p-6">Bonuses</th>
-                                <th className="p-6">Deductions</th>
+                                <th className="p-6">Salary Details</th>
                                 <th className="p-6">Net Salary</th>
-                                <th className="p-6">Status</th>
+                                <th className="p-6">Status & Method</th>
                                 <th className="p-6 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="text-slate-300 text-sm">
-                            {loading ? (
+                            {loading && payrolls.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" className="p-20 text-center">
+                                    <td colSpan="6" className="p-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <Loader2 size={40} className="text-indigo-500 animate-spin" />
                                             <p className="font-black text-slate-500 uppercase tracking-widest text-xs">Computing Payroll...</p>
@@ -228,7 +274,7 @@ const AdminPayroll = () => {
                                 </tr>
                             ) : filteredPayrolls.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" className="p-20 text-center">
+                                    <td colSpan="6" className="p-20 text-center">
                                         <p className="font-bold text-slate-600 uppercase tracking-widest text-xs">No records found</p>
                                     </td>
                                 </tr>
@@ -242,33 +288,67 @@ const AdminPayroll = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-black text-white">{payroll.faculty?.name || 'Unknown'}</p>
-                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{payroll.faculty?.email || 'N/A'}</p>
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                                        {payroll.faculty?.facultyProfile?.employeeId || (payroll.faculty?.email ? payroll.faculty.email.split('@')[0] : 'N/A')}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-6 font-bold text-slate-400">{payroll.month}</td>
-                                        <td className="p-6 text-slate-500 font-medium">${payroll.baseSalary.toLocaleString()}</td>
-                                        <td className="p-6 text-emerald-400 font-bold">+${payroll.bonuses.toLocaleString()}</td>
-                                        <td className="p-6 text-red-500 font-bold">-${payroll.deductions.toLocaleString()}</td>
+                                        <td className="p-6">
+                                            <div className="flex items-center gap-2 text-slate-400 font-bold">
+                                                <Calendar size={14} className="text-indigo-400" />
+                                                {payroll.month}
+                                            </div>
+                                        </td>
+                                        <td className="p-6 font-medium">
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Base: ${payroll.baseSalary.toLocaleString()}</p>
+                                                <div className="flex gap-3 text-[10px]">
+                                                    <span className="text-emerald-400 font-bold">+{payroll.bonuses.toLocaleString()}</span>
+                                                    <span className="text-red-500 font-bold">-{payroll.deductions.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        </td>
                                         <td className="p-6">
                                             <p className="font-black text-white text-lg">${payroll.netSalary.toLocaleString()}</p>
                                         </td>
                                         <td className="p-6">
-                                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border ${payroll.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                }`}>
-                                                {payroll.status}
-                                            </span>
+                                            <div className="space-y-2">
+                                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border block w-fit ${payroll.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                    'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                    }`}>
+                                                    {payroll.status}
+                                                </span>
+                                                {payroll.status === 'Paid' && (
+                                                    <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                                                        <CreditCard size={12} /> {payroll.paymentMethod}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="p-6 text-right">
-                                            {payroll.status !== 'Paid' && (
+                                            <div className="flex justify-end gap-2">
                                                 <button
-                                                    onClick={() => markAsPaid(payroll._id)}
-                                                    className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 transition-all opacity-0 group-hover:opacity-100"
+                                                    onClick={() => generatePayslipPDF(payroll, payroll.faculty)}
+                                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
+                                                    title="Download Payslip"
                                                 >
-                                                    Disburse
+                                                    <Download size={16} />
                                                 </button>
-                                            )}
+                                                {payroll.status !== 'Paid' ? (
+                                                    <button
+                                                        onClick={() => { setSelectedEntry(payroll); setShowDisburseModal(true); }}
+                                                        className="p-2 rounded-lg transition-all text-indigo-400 hover:text-white hover:bg-indigo-500/20"
+                                                        title="Disburse Payroll"
+                                                    >
+                                                        <CreditCard size={16} />
+                                                    </button>
+                                                ) : (
+                                                    <div className="p-2 text-[10px] text-emerald-500 font-black uppercase tracking-[0.2em] flex items-center justify-end gap-2">
+                                                        <CheckCircle size={16} />
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -286,7 +366,7 @@ const AdminPayroll = () => {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-slate-900 border border-white/10 rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl overflow-hidden"
+                            className="bg-slate-900 border border-white/10 rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar"
                         >
                             <h2 className="text-3xl font-black text-white mb-2">{modalType === 'single' ? 'Generate Payroll' : 'Bulk Payroll Run'}</h2>
                             <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-8">{modalType === 'single' ? 'Create a manual entry for one faculty' : 'Generate entries for all active faculty'}</p>
@@ -312,7 +392,7 @@ const AdminPayroll = () => {
                                                 {searchResults.map(s => (
                                                     <div
                                                         key={s._id}
-                                                        onClick={() => { setSelectedFaculty(s); setFacultySearch(s.name); setSearchResults([]); }}
+                                                        onClick={() => selectFaculty(s)}
                                                         className="p-4 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 flex items-center justify-between"
                                                     >
                                                         <div>
@@ -333,7 +413,9 @@ const AdminPayroll = () => {
                                                     </div>
                                                     <div>
                                                         <p className="font-black text-white text-sm">{selectedFaculty.name}</p>
-                                                        <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">{selectedFaculty.email}</p>
+                                                        <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">
+                                                            {selectedFaculty.facultyProfile?.baseSalary ? `Standard Salary: $${selectedFaculty.facultyProfile.baseSalary}` : 'No salary set'}
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <button type="button" onClick={() => setSelectedFaculty(null)} className="text-[10px] font-black text-slate-500 uppercase hover:text-white transition-colors">Change</button>
@@ -402,10 +484,77 @@ const AdminPayroll = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={modalType === 'single' && !selectedFaculty}
-                                        className="flex-1 px-4 py-5 bg-white text-black hover:bg-gray-200 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] transition-all shadow-2xl disabled:opacity-50"
+                                        className="flex-1 px-4 py-5 bg-white text-black hover:bg-gray-200 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] transition-all shadow-2xl"
                                     >
                                         {modalType === 'single' ? 'Deploy Entry' : 'Run Mass Payout'}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Disburse Modal */}
+            <AnimatePresence>
+                {showDisburseModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="bg-slate-900 border border-white/10 rounded-[2.5rem] w-full max-w-md p-10 shadow-2xl"
+                        >
+                            <h2 className="text-2xl font-black text-white mb-2">Confirm Disbursement</h2>
+                            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-8">Process payment for {selectedEntry?.faculty?.name}</p>
+
+                            <form onSubmit={handleDisburse} className="space-y-6">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Payment Method</label>
+                                    <select
+                                        value={disburseData.paymentMethod}
+                                        onChange={e => setDisburseData({ ...disburseData, paymentMethod: e.target.value })}
+                                        className="w-full bg-slate-950 border border-white/10 rounded-2xl px-4 py-4 text-white font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                    >
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="Cash">Cash</option>
+                                        <option value="Cheque">Cheque</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Transaction ID / Reference</label>
+                                    <div className="relative">
+                                        <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. TXN12345678"
+                                            value={disburseData.transactionId}
+                                            onChange={e => setDisburseData({ ...disburseData, transactionId: e.target.value })}
+                                            className="w-full bg-slate-950 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                                    <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] text-center">Net Amount to Pay</p>
+                                    <p className="text-3xl font-black text-white text-center mt-1">${selectedEntry?.netSalary?.toLocaleString()}</p>
+                                </div>
+
+                                <div className="flex gap-4 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDisburseModal(false)}
+                                        className="flex-1 px-4 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-700 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 px-4 py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 transition-all"
+                                    >
+                                        Confirm & Pay
                                     </button>
                                 </div>
                             </form>
@@ -418,3 +567,4 @@ const AdminPayroll = () => {
 };
 
 export default AdminPayroll;
+

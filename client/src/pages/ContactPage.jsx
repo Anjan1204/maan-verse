@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import api from '../utils/api';
 
 const ContactPage = () => {
     const [formData, setFormData] = useState({
@@ -15,10 +16,10 @@ const ContactPage = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Simulate sending
-        setTimeout(() => {
+        try {
+            const { data } = await api.post('/contact', formData);
             toast.success('Message sent successfully! We will get back to you soon.', {
                 position: "top-right",
                 autoClose: 3000,
@@ -29,7 +30,13 @@ const ContactPage = () => {
                 theme: "dark",
             });
             setFormData({ name: '', email: '', message: '' });
-        }, 1000);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to send message', {
+                position: "top-right",
+                autoClose: 3000,
+                theme: "dark",
+            });
+        }
     };
 
     return (

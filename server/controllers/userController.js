@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Course = require('../models/Course');
 const generateToken = require('../utils/generateToken');
 
 // @desc    Get current user profile
@@ -235,8 +236,9 @@ const getDashboardStats = async (req, res, next) => {
         // I will do a separate replace for imports.
 
         // For now, I will use mongoose.model('Course') to avoid import issues if not imported.
-        const Course = require('mongoose').model('Course');
-        const countCourses = await Course.countDocuments();
+        const courses = await Course.find({});
+        const countCourses = courses.length;
+        const totalRevenue = courses.reduce((acc, curr) => acc + (curr.price * (curr.enrolledCount || 0)), 0);
 
         // Recent Users
         const recentUsers = await User.find().sort({ createdAt: -1 }).limit(5);
@@ -278,7 +280,8 @@ const getDashboardStats = async (req, res, next) => {
                 totalUsers,
                 totalStudents,
                 totalFaculty,
-                totalCourses: countCourses
+                totalCourses: countCourses,
+                totalRevenue
             },
             recentUsers,
             distribution,
@@ -294,20 +297,33 @@ const getDashboardStats = async (req, res, next) => {
 // @access  Private
 const searchUsers = async (req, res, next) => {
     try {
-        const { query, role } = req.query;
+        const { search, query, role } = req.query;
+        const searchTerm = String(search || query || '').trim();
+
+        // If no search term, return a few recent users (excluding requester)
+        if (!searchTerm) {
+            const users = await User.find({ _id: { $ne: req.user._id } })
+                .select('name email role profile.avatar')
+                .limit(5)
+                .sort({ createdAt: -1 });
+            return res.json(users);
+        }
+
         const filter = {
+            _id: { $ne: req.user._id },
             $or: [
-                { name: { $regex: query, $options: 'i' } },
-                { email: { $regex: query, $options: 'i' } }
+                { name: { $regex: searchTerm, $options: 'i' } },
+                { email: { $regex: searchTerm, $options: 'i' } }
             ]
         };
         if (role) filter.role = role;
 
         const users = await User.find(filter)
-            .select('name email role studentProfile.rollNo facultyProfile.employeeId')
+            .select('name email role profile.avatar studentProfile.rollNo facultyProfile.employeeId')
             .limit(10);
         res.json(users);
     } catch (error) {
+        console.error("Search Users Error:", error);
         next(error);
     }
 };

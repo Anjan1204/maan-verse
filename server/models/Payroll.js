@@ -31,6 +31,14 @@ const payrollSchema = mongoose.Schema({
         enum: ['Generated', 'Paid'],
         default: 'Generated',
     },
+    transactionId: {
+        type: String,
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['Bank Transfer', 'Cash', 'Cheque', 'Other'],
+        default: 'Bank Transfer'
+    },
     paidAt: {
         type: Date,
     }

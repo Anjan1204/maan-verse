@@ -1,5 +1,6 @@
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
+const Notification = require('../models/Notification');
 
 // @desc    Create or get conversation
 // @route   POST /api/messaging/conversation
@@ -43,7 +44,31 @@ const sendMessage = async (req, res, next) => {
             lastMessage: content
         });
 
-        res.status(201).json(message);
+        const fullMessage = await Message.findById(message._id).populate('sender', 'name profile.avatar');
+
+        const io = req.app.get('io');
+        if (io) {
+            io.to(conversationId).emit('message:received', fullMessage);
+
+            // Notification logic: Find recipient
+            const conversation = await Conversation.findById(conversationId);
+            const recipientId = conversation.participants.find(p => p.toString() !== req.user._id.toString());
+
+            if (recipientId) {
+                const notification = await Notification.create({
+                    recipient: recipientId,
+                    type: 'Message',
+                    title: 'New Message',
+                    message: `You have a new message from ${req.user.name}`,
+                    link: '/messaging'
+                });
+
+                // Emit to recipient's personal room
+                io.to(recipientId.toString()).emit('notification:received', notification);
+            }
+        }
+
+        res.status(201).json(fullMessage);
     } catch (error) {
         next(error);
     }

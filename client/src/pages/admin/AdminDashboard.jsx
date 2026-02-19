@@ -20,24 +20,31 @@ const AdminDashboard = () => {
     const [pieData, setPieData] = useState([]);
 
     const [adminUsers, setAdminUsers] = useState([]);
+    const [contacts, setContacts] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const socket = useSocket();
 
     const fetchStats = async () => {
         try {
-            const [{ data: statsData }, { data: inqData }, { data: adminsData }] = await Promise.all([
+            const [
+                { data: statsData },
+                { data: inqData },
+                { data: adminsData },
+                { data: contactData }
+            ] = await Promise.all([
                 api.get('/users/stats'),
                 api.get('/inquiries'),
-                api.get('/admin/users')
+                api.get('/admin/users'),
+                api.get('/contact')
             ]);
             setStats(statsData.stats);
             setRecentUsers(statsData.recentUsers || []);
             setPieData(statsData.distribution || []);
-            // If graphData is empty (no new users in 7 days), provide simplified placeholder or empty
             setUsageData(statsData.graphData && statsData.graphData.length > 0 ? statsData.graphData : []);
             setInquiries(inqData);
             setAdminUsers(adminsData);
+            setContacts(contactData);
         } catch (error) {
             console.error(error);
         } finally {
@@ -67,12 +74,25 @@ const AdminDashboard = () => {
                 setInquiries(prev => [newInq, ...prev]);
                 toast.info('New Inquiry Received');
             });
+            socket.on('contact:new', (newContact) => {
+                setContacts(prev => [newContact, ...prev]);
+                toast.info('New Contact Message Received');
+            });
+            socket.on('revenue:update', ({ amount }) => {
+                setStats(prev => ({
+                    ...prev,
+                    totalRevenue: (prev.totalRevenue || 0) + amount
+                }));
+                toast.success(`Revenue updated: +$${amount}`);
+            });
         }
 
         return () => {
             if (socket) {
                 socket.off('user:new');
                 socket.off('inquiry:new');
+                socket.off('contact:new');
+                socket.off('revenue:update');
             }
         };
     }, [socket]);
@@ -82,6 +102,16 @@ const AdminDashboard = () => {
             await api.put(`/inquiries/${id}`, { status });
             toast.success(`Inquiry marked as ${status}`);
             fetchStats(); // Refresh list
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to update status');
+        }
+    };
+
+    const handleContactStatusUpdate = async (id, status) => {
+        try {
+            await api.put(`/contact/${id}`, { status });
+            toast.success(`Contact message marked as ${status}`);
+            fetchStats();
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to update status');
         }
@@ -129,10 +159,10 @@ const AdminDashboard = () => {
     const COLORS = ['#6366f1', '#ec4899', '#10b981'];
 
     const cards = [
+        { title: 'Total Revenue', value: stats.totalRevenue ? `$${stats.totalRevenue.toLocaleString()}` : '$0', icon: TrendingUp, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
         { title: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
         { title: 'Active Students', value: stats.totalStudents, icon: GraduationCap, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { title: 'Faculty Members', value: stats.totalFaculty, icon: Activity, color: 'text-pink-500', bg: 'bg-pink-500/10' },
-        { title: 'Total Courses', value: stats.totalCourses, icon: Video, color: 'text-orange-500', bg: 'bg-orange-500/10' },
     ];
 
     if (loading) return <div className="p-10 text-center text-white">Loading dashboard...</div>;
@@ -376,6 +406,78 @@ const AdminDashboard = () => {
                                             </a>
                                             <a href={`tel:${inq.phone}`} className="p-2 bg-gray-700 rounded-lg hover:bg-emerald-600 transition-colors text-white" title="Call">
                                                 <Phone size={14} />
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Contact Messages Table */}
+            <div className="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden mt-8 mb-8">
+                <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-blue-900/10">
+                    <div>
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                            <Mail className="text-blue-400" size={20} />
+                            Contact Messages
+                        </h3>
+                        <p className="text-sm text-gray-400 mt-1">General inquiries from the website</p>
+                    </div>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-gray-400">
+                        <thead className="bg-gray-700/50 text-gray-200 text-xs uppercase font-medium">
+                            <tr>
+                                <th className="px-6 py-4">Sender</th>
+                                <th className="px-6 py-4">Email</th>
+                                <th className="px-6 py-4">Message</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-700">
+                            {contacts.length === 0 ? (
+                                <tr><td colSpan="5" className="text-center py-8">No contact messages found</td></tr>
+                            ) : contacts.map((contact) => (
+                                <tr key={contact._id} className="hover:bg-gray-700/30 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                                                {contact.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="text-white font-medium">{contact.name}</p>
+                                                <p className="text-[10px] text-gray-500">{new Date(contact.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-300">{contact.email}</td>
+                                    <td className="px-6 py-4 max-w-xs">
+                                        <p className="text-sm text-gray-300 break-words" title={contact.message}>{contact.message}</p>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium border
+                                            ${contact.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                                                'bg-green-500/10 text-green-400 border-green-500/20'}`}>
+                                            {contact.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex gap-2">
+                                            {contact.status === 'Pending' && (
+                                                <button
+                                                    onClick={() => handleContactStatusUpdate(contact._id, 'Responded')}
+                                                    className="p-2 bg-gray-700 rounded-lg hover:bg-emerald-600 transition-colors text-white"
+                                                    title="Mark as Responded"
+                                                >
+                                                    <Check size={14} />
+                                                </button>
+                                            )}
+                                            <a href={`mailto:${contact.email}`} className="p-2 bg-gray-700 rounded-lg hover:bg-blue-600 transition-colors text-white" title="Email">
+                                                <Mail size={14} />
                                             </a>
                                         </div>
                                     </td>

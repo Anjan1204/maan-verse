@@ -36,6 +36,7 @@ const enrollInCourse = async (req, res, next) => {
         const io = req.app.get('io');
         if (io) {
             io.emit('enrollment:new', { courseId: course._id, studentId: req.user._id });
+            io.emit('revenue:update', { amount: course.price });
         }
 
         res.status(201).json(createdEnrollment);

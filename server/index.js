@@ -70,11 +70,13 @@ app.use('/api/forum', require('./routes/forumRoutes'));
 app.use('/api/leave', require('./routes/leaveRoutes'));
 app.use('/api/messaging', require('./routes/messageRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/badges', require('./routes/badgeRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/fees', require('./routes/feeRoutes'));
 app.use('/api/payroll', require('./routes/payrollRoutes'));
 app.use('/api/plagiarism', require('./routes/plagiarismRoutes'));
+app.use('/api/contact', require('./routes/contactRoutes'));
 
 // Error Handler
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -147,6 +149,12 @@ io.on('connection', (socket) => {
             // Cleanup
             loginRequests.delete(requestId);
         }
+    });
+
+    // Messaging: User joins a specific conversation room
+    socket.on('join:conversation', (conversationId) => {
+        socket.join(conversationId);
+        console.log(`Socket ${socket.id} joined conversation: ${conversationId}`);
     });
 
     socket.on('disconnect', () => {
