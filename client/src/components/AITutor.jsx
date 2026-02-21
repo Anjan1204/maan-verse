@@ -58,7 +58,7 @@ const AiTutor = () => {
             console.error(error);
             const errorMessage = {
                 id: Date.now() + 1,
-                text: "I'm having trouble connecting right now. Please try again later.",
+                text: error.response?.data?.error || error.response?.data?.message || "I'm having trouble connecting right now. Please try again later.",
                 sender: 'ai',
                 isError: true,
                 timestamp: new Date()

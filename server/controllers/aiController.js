@@ -4,34 +4,49 @@ const chatWithLink = async (req, res) => {
     try {
         const { message, history } = req.body;
 
+        console.log(`[AI-CHAT] Request received from user ${req.user?._id}`);
+
         // Check if API key exists
         if (!process.env.GEMINI_API_KEY) {
-            return res.status(500).json({ message: "Gemini API Key not configured" });
+            console.error("[AI-CHAT] GEMINI_API_KEY is missing in environment");
+            return res.status(500).json({ message: "Gemini API Key not configured on the server" });
         }
 
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        console.log(`[AI-CHAT] Using API Key (length: ${process.env.GEMINI_API_KEY.length})`);
 
-        // Convert history to Gemini format if needed, or just send prompt
-        // Simple implementation first: Just send the message with context
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        // Convert history to Gemini format
+        const formattedHistory = history ? history.map(h => ({
+            role: h.sender === 'user' ? 'user' : 'model',
+            parts: [{ text: h.text }]
+        })) : [];
+
+        console.log(`[AI-CHAT] Starting chat with ${formattedHistory.length} history messages`);
+
         const chat = model.startChat({
-            history: history ? history.map(h => ({
-                role: h.sender === 'user' ? 'user' : 'model',
-                parts: [{ text: h.text }]
-            })) : [],
+            history: formattedHistory,
             generationConfig: {
-                maxOutputTokens: 500,
+                maxOutputTokens: 1000,
             },
         });
 
+        console.log("[AI-CHAT] Sending message to Gemini...");
         const result = await chat.sendMessage(message);
         const response = await result.response;
         const text = response.text();
 
+        console.log("[AI-CHAT] Gemini response successful");
         res.json({ reply: text });
     } catch (error) {
-        console.error("AI Chat Error:", error);
-        res.status(500).json({ message: "AI Service Unavailable", error: error.message });
+        console.error("[AI-CHAT] Error:", error.message);
+        console.error("[AI-CHAT] Error Details:", JSON.stringify(error));
+        res.status(500).json({
+            message: "AI Service Error",
+            error: error.message,
+            status: error.status || 500
+        });
     }
 };
 
