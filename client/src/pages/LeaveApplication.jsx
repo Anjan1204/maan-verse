@@ -155,13 +155,13 @@ const LeaveApplication = () => {
                     <History size={18} className="text-gray-500" />
                     <h2 className="text-xs font-black uppercase tracking-[0.3em] text-gray-500">{view === 'admin' ? 'Pending Review Registry' : 'My Leave Protocol'}</h2>
                 </div>
-                {leaves.length === 0 ? (
+                {!leaves || leaves.length === 0 ? (
                     <div className="text-center py-20 glass border border-dashed border-white/5 rounded-[3rem]">
                         <p className="text-xs font-black uppercase tracking-widest text-gray-600">No active leave logs found</p>
                     </div>
                 ) : (
                     <div className="grid gap-6">
-                        {leaves.map(leave => (
+                        {leaves?.map(leave => (
                             <div key={leave._id} className="glass p-8 rounded-[2.5rem] border border-white/5 hover:bg-white/[0.02] transition-all">
                                 <div className="flex flex-col md:flex-row justify-between gap-6">
                                     <div className="flex gap-6">
@@ -177,7 +177,7 @@ const LeaveApplication = () => {
                                                 {new Date(leave.startDate).toLocaleDateString()} — {new Date(leave.endDate).toLocaleDateString()}
                                             </p>
                                             {view === 'admin' && (
-                                                <p className="text-[10px] font-black text-primary uppercase mt-2">{leave.user.name} ({leave.role})</p>
+                                                <p className="text-[10px] font-black text-primary uppercase mt-2">{leave.user?.name || 'Unknown User'} ({leave.role})</p>
                                             )}
                                         </div>
                                     </div>
