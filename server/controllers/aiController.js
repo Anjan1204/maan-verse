@@ -15,7 +15,7 @@ const chatWithLink = async (req, res) => {
         console.log(`[AI-CHAT] Using API Key (length: ${process.env.GEMINI_API_KEY.length})`);
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
         // Convert history to Gemini format
         let formattedHistory = history ? history.map(h => ({
