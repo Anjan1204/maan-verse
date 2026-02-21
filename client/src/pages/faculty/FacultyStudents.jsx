@@ -14,16 +14,11 @@ const FacultyStudents = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const mockStudents = [
-        { _id: '1', name: 'John Doe', email: 'john@example.com', studentProfile: { rollNo: 'CS101', branch: 'Computer Science' } },
-        { _id: '2', name: 'Jane Smith', email: 'jane@example.com', studentProfile: { rollNo: 'CS102', branch: 'Information Technology' } }
-    ];
-
     useEffect(() => {
         const fetchStudents = async () => {
             try {
-                await api.get('/faculty/students');
-                setStudents(mockStudents);
+                const { data } = await api.get('/faculty/students');
+                setStudents(data);
             } catch {
                 console.error("Failed to fetch students");
             } finally {
