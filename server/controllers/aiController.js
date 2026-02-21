@@ -18,10 +18,17 @@ const chatWithLink = async (req, res) => {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         // Convert history to Gemini format
-        const formattedHistory = history ? history.map(h => ({
+        let formattedHistory = history ? history.map(h => ({
             role: h.sender === 'user' ? 'user' : 'model',
             parts: [{ text: h.text }]
         })) : [];
+
+        // Gemini history must start with 'user' role. 
+        // If it starts with 'model' (like the initial greeting), we must remove it.
+        if (formattedHistory.length > 0 && formattedHistory[0].role !== 'user') {
+            console.log("[AI-CHAT] Removing initial non-user message from history");
+            formattedHistory.shift();
+        }
 
         console.log(`[AI-CHAT] Starting chat with ${formattedHistory.length} history messages`);
 
