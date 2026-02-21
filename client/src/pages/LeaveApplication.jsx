@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, AlertCircle, CheckCircle, XCircle, Send, Plus, History } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const LeaveApplication = () => {
@@ -10,7 +10,7 @@ const LeaveApplication = () => {
     const [leaves, setLeaves] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showApply, setShowApply] = useState(false);
-    const view = user?.role === 'admin' ? 'admin' : 'user'; // Removed unused setView
+    const view = user?.role === 'admin' ? 'admin' : 'user';
 
     const [formData, setFormData] = useState({
         type: 'Sick Leave',
@@ -97,7 +97,6 @@ const LeaveApplication = () => {
 
     return (
         <div className="space-y-10 pb-20 font-sans">
-            <ToastContainer theme="dark" />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
