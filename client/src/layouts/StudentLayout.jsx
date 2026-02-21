@@ -15,7 +15,7 @@ import {
     BarChart2,
     DollarSign
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import NotificationDropdown from '../components/NotificationDropdown';
 import { motion, AnimatePresence } from 'framer-motion';
 import AITutor from '../components/AITutor';

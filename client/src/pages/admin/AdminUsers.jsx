@@ -25,7 +25,7 @@ const AdminUsers = () => {
             // Also fetch pending registration requests
             const { data: requests } = await api.get('/admin/pending-requests');
             setPendingRequests(requests);
-        } catch (error) {
+        } catch {
             toast.error('Failed to load users');
         } finally {
             setLoading(false);
@@ -42,7 +42,7 @@ const AdminUsers = () => {
                 await api.delete(`/users/${id}`);
                 toast.success('User deleted');
                 fetchUsers();
-            } catch (error) {
+            } catch {
                 toast.error('Failed to delete user');
             }
         }
@@ -53,7 +53,7 @@ const AdminUsers = () => {
             await api.put(`/users/${user._id}`, { isActive: !user.isActive });
             toast.success(`User ${!user.isActive ? 'activated' : 'deactivated'}`);
             fetchUsers();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update status');
         }
     };
@@ -139,7 +139,7 @@ const AdminUsers = () => {
                                                 await api.put(`/admin/approve/${request._id}`);
                                                 toast.success('Admin approved successfully');
                                                 fetchUsers();
-                                            } catch (error) {
+                                            } catch {
                                                 toast.error('Failed to approve admin');
                                             }
                                         }}
@@ -154,7 +154,7 @@ const AdminUsers = () => {
                                                     await api.delete(`/admin/reject/${request._id}`);
                                                     toast.success('Admin request rejected');
                                                     fetchUsers();
-                                                } catch (error) {
+                                                } catch {
                                                     toast.error('Failed to reject admin');
                                                 }
                                             }
@@ -186,7 +186,7 @@ const AdminUsers = () => {
                                                 await api.put(`/admin/approve/${user._id}`);
                                                 toast.success('Admin approved successfully');
                                                 fetchUsers();
-                                            } catch (error) {
+                                            } catch {
                                                 toast.error('Failed to approve admin');
                                             }
                                         }}
@@ -201,7 +201,7 @@ const AdminUsers = () => {
                                                     await api.delete(`/admin/reject/${user._id}`);
                                                     toast.success('Admin request rejected');
                                                     fetchUsers();
-                                                } catch (error) {
+                                                } catch {
                                                     toast.error('Failed to reject admin');
                                                 }
                                             }

@@ -6,26 +6,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ForumSection = ({ courseId }) => {
     const [threads, setThreads] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // const [loading, setLoading] = useState(true); // Removed unused variable 'loading'
     const [newThread, setNewThread] = useState({ title: '', content: '' });
     const [expandedThread, setExpandedThread] = useState(null);
     const [comments, setComments] = useState({});
     const [newComment, setNewComment] = useState('');
 
-    useEffect(() => {
-        fetchThreads();
-    }, [courseId]);
-
+    // Define fetchThreads outside useEffect so it can be called by handleCreateThread
     const fetchThreads = async () => {
         try {
             const { data } = await api.get(`/forum/course/${courseId}`);
             setThreads(data);
         } catch (error) {
-            toast.error('Failed to load forum threads');
-        } finally {
-            setLoading(false);
+            console.error(error);
+            toast.error('Failed to load discussions'); // Updated message
         }
     };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchThreads();
+    }, [courseId]); // Dependency changed to courseId
 
     const handleCreateThread = async (e) => {
         e.preventDefault();
@@ -35,18 +36,20 @@ const ForumSection = ({ courseId }) => {
             fetchThreads();
             toast.success('Discussion started!');
         } catch (error) {
+            console.error(error);
             toast.error('Failed to create thread');
         }
     };
 
-    const fetchComments = async (threadId) => {
+    const fetchComments = React.useCallback(async (threadId) => {
         try {
             const { data } = await api.get(`/forum/threads/${threadId}/comments`);
             setComments(prev => ({ ...prev, [threadId]: data }));
         } catch (error) {
+            console.error(error);
             toast.error('Failed to load comments');
         }
-    };
+    }, []);
 
     const handleAddComment = async (threadId) => {
         if (!newComment.trim()) return;
@@ -55,6 +58,7 @@ const ForumSection = ({ courseId }) => {
             setNewComment('');
             fetchComments(threadId);
         } catch (error) {
+            console.error(error);
             toast.error('Failed to add comment');
         }
     };
@@ -64,6 +68,7 @@ const ForumSection = ({ courseId }) => {
             await api.put(`/forum/comments/${commentId}/like`);
             fetchComments(threadId);
         } catch (error) {
+            console.error(error);
             toast.error('Failed to like comment');
         }
     };

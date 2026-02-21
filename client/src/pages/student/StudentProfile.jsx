@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { User, Phone, MapPin, Calendar, Mail, Save, Upload, GraduationCap, BookOpen } from 'lucide-react';
 import { toast } from 'react-toastify';
 import api from '../../utils/api';

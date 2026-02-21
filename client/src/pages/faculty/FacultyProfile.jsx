@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import api from '../../utils/api';
 import { User, Mail, Phone, Briefcase, Calendar, Building2, Award, Camera, Save, X, CheckCircle, AlertCircle, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const FacultyProfile = () => {
     const [profile, setProfile] = useState(null);

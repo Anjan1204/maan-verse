@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, AlertCircle, CheckCircle, XCircle, Send, Plus, History } from 'lucide-react';
 import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { toast, ToastContainer } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,7 +10,7 @@ const LeaveApplication = () => {
     const [leaves, setLeaves] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showApply, setShowApply] = useState(false);
-    const [view, setView] = useState(user?.role === 'admin' ? 'admin' : 'user');
+    const view = user?.role === 'admin' ? 'admin' : 'user'; // Removed unused setView
 
     const [formData, setFormData] = useState({
         type: 'Sick Leave',
@@ -62,6 +62,7 @@ const LeaveApplication = () => {
             const { data } = await api.get('/leave/my');
             setLeaves(data);
         } catch (error) {
+            console.error(error);
             toast.error('Application failed to transmit');
         }
     };
@@ -79,6 +80,7 @@ const LeaveApplication = () => {
             const { data } = await api.get('/leave/admin');
             setLeaves(data);
         } catch (error) {
+            console.error(error);
             toast.error('Decision failed to sync');
         }
     };

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState } from 'react';
 import api from '../utils/api';
 
 const AuthContext = createContext();
@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
         const userInfo = localStorage.getItem('userInfo');
         return userInfo ? JSON.parse(userInfo) : null;
     });
-    const [loading, setLoading] = useState(false);
+    // const [loading, setLoading] = useState(false); // Removed unused variable 'loading'
 
 
     // Synchronize user state with localStorage whenever it changes
@@ -44,10 +44,10 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, setUser: syncUser, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, setUser: syncUser, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export { AuthContext };

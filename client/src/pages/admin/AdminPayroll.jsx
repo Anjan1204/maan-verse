@@ -20,7 +20,7 @@ import {
     Hash
 } from 'lucide-react';
 import { generatePayslipPDF } from '../../utils/payslipGenerator';
-import { useSocket } from '../../context/SocketContext';
+import { useSocket } from '../../hooks/useSocket';
 import { toast } from 'react-toastify';
 
 const AdminPayroll = () => {
@@ -208,7 +208,7 @@ const AdminPayroll = () => {
                         <TrendingUp size={80} className="text-indigo-500" />
                     </div>
                     <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Total Disbursed</p>
-                    <h3 className="text-3xl font-black text-white mt-2">${totalPaid.toLocaleString()}</h3>
+                    <h3 className="text-3xl font-black text-white mt-2">₹{totalPaid.toLocaleString()}</h3>
                     <div className="mt-4 flex items-center gap-2 text-indigo-400 text-xs font-bold">
                         <CreditCard size={14} /> System Records
                     </div>
@@ -218,7 +218,7 @@ const AdminPayroll = () => {
                         <Clock size={80} className="text-amber-500" />
                     </div>
                     <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Pending Payouts</p>
-                    <h3 className="text-3xl font-black text-white mt-2">${totalPending.toLocaleString()}</h3>
+                    <h3 className="text-3xl font-black text-white mt-2">₹{totalPending.toLocaleString()}</h3>
                     <div className="mt-4 flex items-center gap-2 text-amber-500 text-xs font-bold">
                         <span className="w-2 h-2 rounded-full bg-amber-500" /> Awaiting Action
                     </div>
@@ -302,7 +302,7 @@ const AdminPayroll = () => {
                                         </td>
                                         <td className="p-6 font-medium">
                                             <div className="space-y-1">
-                                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Base: ${payroll.baseSalary.toLocaleString()}</p>
+                                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Base: ₹{payroll.baseSalary.toLocaleString()}</p>
                                                 <div className="flex gap-3 text-[10px]">
                                                     <span className="text-emerald-400 font-bold">+{payroll.bonuses.toLocaleString()}</span>
                                                     <span className="text-red-500 font-bold">-{payroll.deductions.toLocaleString()}</span>
@@ -310,7 +310,7 @@ const AdminPayroll = () => {
                                             </div>
                                         </td>
                                         <td className="p-6">
-                                            <p className="font-black text-white text-lg">${payroll.netSalary.toLocaleString()}</p>
+                                            <p className="font-black text-white text-lg">₹{payroll.netSalary.toLocaleString()}</p>
                                         </td>
                                         <td className="p-6">
                                             <div className="space-y-2">
@@ -414,7 +414,7 @@ const AdminPayroll = () => {
                                                     <div>
                                                         <p className="font-black text-white text-sm">{selectedFaculty.name}</p>
                                                         <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">
-                                                            {selectedFaculty.facultyProfile?.baseSalary ? `Standard Salary: $${selectedFaculty.facultyProfile.baseSalary}` : 'No salary set'}
+                                                            {selectedFaculty.facultyProfile?.baseSalary ? `Standard Salary: ₹${selectedFaculty.facultyProfile.baseSalary}` : 'No salary set'}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -441,7 +441,7 @@ const AdminPayroll = () => {
 
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Base Salary ($)</label>
+                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Base Salary (₹)</label>
                                         <input
                                             type="number"
                                             required
@@ -452,7 +452,7 @@ const AdminPayroll = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Bonuses ($)</label>
+                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Bonuses (₹)</label>
                                         <input
                                             type="number"
                                             value={formData.bonuses}
@@ -464,7 +464,7 @@ const AdminPayroll = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-2">Deductions ($)</label>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-2">Deductions (₹)</label>
                                     <input
                                         type="number"
                                         value={formData.deductions}
@@ -539,7 +539,7 @@ const AdminPayroll = () => {
 
                                 <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
                                     <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] text-center">Net Amount to Pay</p>
-                                    <p className="text-3xl font-black text-white text-center mt-1">${selectedEntry?.netSalary?.toLocaleString()}</p>
+                                    <p className="text-3xl font-black text-white text-center mt-1">₹{selectedEntry?.netSalary?.toLocaleString()}</p>
                                 </div>
 
                                 <div className="flex gap-4 pt-2">

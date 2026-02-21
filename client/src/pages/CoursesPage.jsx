@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Filter, BookOpen } from 'lucide-react';
+import { Search, BookOpen } from 'lucide-react';
 
 const CoursesPage = () => {
     const [courses, setCourses] = useState([]);
@@ -116,7 +116,7 @@ const CoursesPage = () => {
                                             </div>
                                             <span>{course.faculty?.name || 'Instructor'}</span>
                                         </div>
-                                        <span className="text-lg font-bold text-secondary">${course.price}</span>
+                                        <span className="text-lg font-bold text-secondary">₹{course.price}</span>
                                     </div>
 
                                     <button

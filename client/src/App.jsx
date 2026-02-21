@@ -44,6 +44,7 @@ import StudentTimetable from './pages/student/StudentTimetable';
 import StudentExams from './pages/student/StudentExams';
 import StudentNotices from './pages/student/StudentNotices';
 import StudentFees from './pages/student/StudentFees';
+import FeePaymentPage from './pages/student/FeePaymentPage';
 import CourseContentPage from './pages/student/CourseContentPage';
 import StudentLayout from './layouts/StudentLayout';
 
@@ -104,6 +105,7 @@ function App() {
                 <Route path="leave" element={<LeaveApplication />} />
                 <Route path="analytics" element={<AnalyticsPortal />} />
                 <Route path="fees" element={<StudentFees />} />
+                <Route path="pay-fee/:feeId" element={<FeePaymentPage />} />
               </Route>
             </Route>
 

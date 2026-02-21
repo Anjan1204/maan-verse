@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
-import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
+import { useAuth } from '../../hooks/useAuth';
+import { useSocket } from '../../hooks/useSocket';
 import { Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { generatePayslipPDF } from '../../utils/payslipGenerator';
@@ -12,8 +12,10 @@ const FacultyPayroll = () => {
     const [payrolls, setPayrolls] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchPayroll = async () => {
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
+    const fetchPayroll = React.useCallback(async () => {
         try {
+            if (!user?._id) return;
             const { data } = await api.get(`/payroll/faculty/${user._id}`);
             setPayrolls(data);
             setLoading(false);
@@ -21,11 +23,12 @@ const FacultyPayroll = () => {
             console.error(error);
             setLoading(false);
         }
-    };
+    }, [user?._id]);
 
     useEffect(() => {
-        if (user?._id) fetchPayroll();
-    }, [user]);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchPayroll();
+    }, [fetchPayroll]);
 
     useEffect(() => {
         if (socket && user?._id) {
@@ -73,7 +76,7 @@ const FacultyPayroll = () => {
                     <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-6">
                         <div>
                             <p className="text-indigo-200 font-medium mb-1">Most recent payout</p>
-                            <h2 className="text-4xl font-bold mb-4">${payrolls[0].netSalary.toLocaleString()}</h2>
+                            <h2 className="text-4xl font-bold mb-4">₹{payrolls[0].netSalary.toLocaleString()}</h2>
                             <div className="flex gap-4 text-sm">
                                 <div className="bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm">
                                     Month: {payrolls[0].month}
@@ -118,10 +121,10 @@ const FacultyPayroll = () => {
                             ) : payrolls.map((payroll) => (
                                 <tr key={payroll._id} className="border-b border-white/5 hover:bg-white/[0.02]">
                                     <td className="p-4 font-medium text-white">{payroll.month}</td>
-                                    <td className="p-4">${payroll.baseSalary.toLocaleString()}</td>
-                                    <td className="p-4 text-emerald-400">+${payroll.bonuses.toLocaleString()}</td>
-                                    <td className="p-4 text-red-400">-${payroll.deductions.toLocaleString()}</td>
-                                    <td className="p-4 font-bold text-indigo-400">${payroll.netSalary.toLocaleString()}</td>
+                                    <td className="p-4">₹{payroll.baseSalary.toLocaleString()}</td>
+                                    <td className="p-4 text-emerald-400">+₹{payroll.bonuses.toLocaleString()}</td>
+                                    <td className="p-4 text-red-400">-₹{payroll.deductions.toLocaleString()}</td>
+                                    <td className="p-4 font-bold text-indigo-400">₹{payroll.netSalary.toLocaleString()}</td>
                                     <td className="p-4 text-slate-500">{new Date(payroll.createdAt).toLocaleDateString()}</td>
                                     <td className="p-4 text-right">
                                         <button

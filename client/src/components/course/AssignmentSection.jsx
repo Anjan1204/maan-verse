@@ -10,20 +10,21 @@ const AssignmentSection = ({ courseId }) => {
     const [submissionData, setSubmissionData] = useState({ fileUrl: '', content: '' });
     const [selectedAssignment, setSelectedAssignment] = useState(null);
 
-    useEffect(() => {
-        fetchAssignments();
-    }, [courseId]);
-
-    const fetchAssignments = async () => {
+    const fetchAssignments = React.useCallback(async () => {
         try {
             const { data } = await api.get(`/assignments/course/${courseId}`);
             setAssignments(data);
         } catch (error) {
+            console.error(error); // Using the variable to fix the lint error instead of removing it, as it's better for debugging.
             toast.error('Failed to load assignments');
         } finally {
             setLoading(false);
         }
-    };
+    }, [courseId]);
+
+    useEffect(() => {
+        fetchAssignments();
+    }, [fetchAssignments]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

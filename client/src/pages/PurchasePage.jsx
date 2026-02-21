@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Mail, Lock, CheckCircle, ArrowLeft, Loader2, QrCode, Smartphone, Clock } from 'lucide-react';
 import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { toast } from 'react-toastify';
 
 const PurchasePage = () => {
@@ -265,8 +265,8 @@ const PurchasePage = () => {
                                     <div className="flex justify-between items-end">
                                         <span className="text-gray-400 font-bold">Course Price</span>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-gray-500 line-through text-sm">${course.price * 2}</span>
-                                            <span className="text-4xl font-black text-secondary">${course.price}</span>
+                                            <span className="text-gray-500 line-through text-sm">₹{course.price * 2}</span>
+                                            <span className="text-4xl font-black text-secondary">₹{course.price}</span>
                                         </div>
                                     </div>
 
@@ -408,7 +408,7 @@ const PurchasePage = () => {
                                         type="submit"
                                         className="w-full py-4 mt-4 bg-gradient-to-r from-primary to-secondary text-white rounded-xl font-black text-sm hover:translate-y-[-2px] transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
                                     >
-                                        {paymentMethod === 'card' ? `Pay $${course.price}` : 'Complete Enrollment'}
+                                        {paymentMethod === 'card' ? `Pay ₹${course.price}` : 'Complete Enrollment'}
                                     </button>
                                 </form>
                                 <div className="flex items-center justify-center gap-2 pt-2 grayscale opacity-40">

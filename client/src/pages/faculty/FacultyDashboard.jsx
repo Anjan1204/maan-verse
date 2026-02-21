@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../utils/api';
-import { useSocket } from '../../context/SocketContext'; // Import Socket
+import { useSocket } from '../../hooks/useSocket'; // Import Socket
 import { Users, BookOpen, Clock, Activity, Building2, Plus, X } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -27,7 +27,7 @@ const FacultyDashboard = () => {
                 setAttendanceData(data.attendanceChart || []);
                 setSchedule(data.todaySchedule || []);
             } catch (error) {
-                console.error("Failed to load dashboard");
+                console.error("Failed to load dashboard", error);
             } finally {
                 setLoading(false);
             }

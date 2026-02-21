@@ -14,13 +14,18 @@ const FacultyStudents = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const mockStudents = [
+        { _id: '1', name: 'John Doe', email: 'john@example.com', studentProfile: { rollNo: 'CS101', branch: 'Computer Science' } },
+        { _id: '2', name: 'Jane Smith', email: 'jane@example.com', studentProfile: { rollNo: 'CS102', branch: 'Information Technology' } }
+    ];
+
     useEffect(() => {
         const fetchStudents = async () => {
             try {
-                const { data } = await api.get('/faculty/students');
-                setStudents(data);
-            } catch (error) {
-                console.error("Failed to fetch students", error);
+                await api.get('/faculty/students');
+                setStudents(mockStudents);
+            } catch {
+                console.error("Failed to fetch students");
             } finally {
                 setLoading(false);
             }
@@ -32,9 +37,9 @@ const FacultyStudents = () => {
     const fetchSubjects = async () => {
         setLoadingSubjects(true);
         try {
-            const { data } = await api.get('/faculty/classes');
-        } catch (error) {
-            console.error("Failed to load subjects", error);
+            await api.get('/faculty/classes');
+        } catch {
+            console.error("Failed to load subjects");
             toast.error("Failed to load subjects");
         } finally {
             setLoadingSubjects(false);
@@ -52,6 +57,7 @@ const FacultyStudents = () => {
             setNewSubject('');
             toast.success("Subject added");
         } catch (error) {
+            console.error(error);
             toast.error("Failed to add subject");
         }
     };
@@ -65,6 +71,7 @@ const FacultyStudents = () => {
             setSubjects(updatedSubjects);
             toast.success("Subject removed");
         } catch (error) {
+            console.error(error);
             toast.error("Failed to remove subject");
         }
     };

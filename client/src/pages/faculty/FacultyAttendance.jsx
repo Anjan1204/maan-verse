@@ -16,6 +16,7 @@ const FacultyAttendance = () => {
                 const { data } = await api.get('/faculty/classes');
                 setClassList(data);
             } catch (error) {
+                console.error(error);
                 toast.error('Failed to load classes');
             }
         };
@@ -34,6 +35,7 @@ const FacultyAttendance = () => {
                     const studentsWithStatus = data.map(s => ({ ...s, status: 'Present' }));
                     setStudents(studentsWithStatus);
                 } catch (error) {
+                    console.error(error);
                     toast.error('Failed to load students');
                 } finally {
                     setLoading(false);
@@ -60,6 +62,7 @@ const FacultyAttendance = () => {
             });
             toast.success('Attendance submitted successfully!');
         } catch (error) {
+            console.error(error);
             toast.error('Failed to submit attendance');
         }
     };

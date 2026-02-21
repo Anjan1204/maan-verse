@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../utils/api';
-import { useSocket } from '../../context/SocketContext';
+import { useSocket } from '../../hooks/useSocket';
 import { Users, GraduationCap, Video, Activity, Mail, Phone, TrendingUp, Check, X } from 'lucide-react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell
@@ -83,7 +83,7 @@ const AdminDashboard = () => {
                     ...prev,
                     totalRevenue: (prev.totalRevenue || 0) + amount
                 }));
-                toast.success(`Revenue updated: +$${amount}`);
+                toast.success(`Revenue updated: +₹${amount}`);
             });
         }
 
@@ -159,7 +159,7 @@ const AdminDashboard = () => {
     const COLORS = ['#6366f1', '#ec4899', '#10b981'];
 
     const cards = [
-        { title: 'Total Revenue', value: stats.totalRevenue ? `$${stats.totalRevenue.toLocaleString()}` : '$0', icon: TrendingUp, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
+        { title: 'Total Revenue', value: stats.totalRevenue ? `₹${stats.totalRevenue.toLocaleString()}` : '₹0', icon: TrendingUp, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
         { title: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
         { title: 'Active Students', value: stats.totalStudents, icon: GraduationCap, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { title: 'Faculty Members', value: stats.totalFaculty, icon: Activity, color: 'text-pink-500', bg: 'bg-pink-500/10' },
@@ -188,17 +188,19 @@ const AdminDashboard = () => {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {cards.map((item, index) => (
-                    <div key={index} className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-gray-600 transition-colors shadow-xl">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-gray-400 text-sm font-medium">{item.title}</p>
-                                <h3 className="text-3xl font-bold text-white mt-2">{item.value}</h3>
-                                <div className="flex items-center mt-2 text-sm text-green-400">
-                                    <TrendingUp size={14} className="mr-1" />
-                                    <span>+12.5% from last month</span>
+                    <div key={index} className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-gray-600 transition-colors shadow-xl overflow-hidden">
+                        <div className="flex justify-between items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-gray-400 text-sm font-medium truncate">{item.title}</p>
+                                <h3 className="text-2xl lg:text-3xl font-bold text-white mt-2 truncate" title={item.value}>
+                                    {item.value}
+                                </h3>
+                                <div className="flex items-center mt-2 text-sm text-green-400 truncate">
+                                    <TrendingUp size={14} className="flex-shrink-0 mr-1" />
+                                    <span className="truncate">+12.5% from last month</span>
                                 </div>
                             </div>
-                            <div className={`p-3 rounded-xl ${item.bg} ${item.color}`}>
+                            <div className={`p-3 rounded-xl flex-shrink-0 ${item.bg} ${item.color}`}>
                                 <item.icon size={24} />
                             </div>
                         </div>

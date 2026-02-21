@@ -19,7 +19,7 @@ const ContactPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await api.post('/contact', formData);
+            await api.post('/contact', formData);
             toast.success('Message sent successfully! We will get back to you soon.', {
                 position: "top-right",
                 autoClose: 3000,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, CreditCard, Users, TrendingUp, Download, Search, Filter, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
-import api from '../utils/api';
+// import api from '../utils/api'; // Removed unused import
 import { toast, ToastContainer } from 'react-toastify';
 import { motion } from 'framer-motion';
 
@@ -26,6 +26,7 @@ const FinanceManagement = () => {
             setFees(mockFees);
             setStats({ total: 7500, collected: 3000, pending: 4500 });
         } catch (error) {
+            console.error(error);
             toast.error('Financial sync failed');
         } finally {
             setLoading(false);
@@ -52,9 +53,9 @@ const FinanceManagement = () => {
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {[
-                    { label: 'Total Receivables', value: `$${stats.total}`, icon: CreditCard, color: 'text-indigo-400' },
-                    { label: 'Revenue Collected', value: `$${stats.collected}`, icon: TrendingUp, color: 'text-emerald-500' },
-                    { label: 'Variance / Pending', value: `$${stats.pending}`, icon: ArrowDownLeft, color: 'text-amber-500' }
+                    { label: 'Total Receivables', value: `₹${stats.total}`, icon: CreditCard, color: 'text-indigo-400' },
+                    { label: 'Revenue Collected', value: `₹${stats.collected}`, icon: TrendingUp, color: 'text-emerald-500' },
+                    { label: 'Variance / Pending', value: `₹${stats.pending}`, icon: ArrowDownLeft, color: 'text-amber-500' }
                 ].map((stat, i) => (
                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }} key={i} className="glass p-8 rounded-[2.5rem] border border-white/5 flex items-center gap-6">
                         <div className={`w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center ${stat.color} border border-white/10`}>
@@ -106,12 +107,12 @@ const FinanceManagement = () => {
                                         </div>
                                     </td>
                                     <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{fee.type}</span></td>
-                                    <td className="px-8 py-6 font-black text-white text-base tracking-tighter">${fee.amount}</td>
+                                    <td className="px-8 py-6 font-black text-white text-base tracking-tighter">₹{fee.amount}</td>
                                     <td className="px-8 py-6 text-[10px] font-medium text-gray-500">{fee.date}</td>
                                     <td className="px-8 py-6">
                                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.2em] border ${fee.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
-                                                fee.status === 'Overdue' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                                    'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                            fee.status === 'Overdue' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                                'bg-amber-500/10 text-amber-500 border-amber-500/20'
                                             }`}>{fee.status}</span>
                                     </td>
                                     <td className="px-8 py-6 text-right">

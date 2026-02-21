@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Sparkles, Bot, User, Loader2, Minimize2, Maximize2 } from 'lucide-react';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
+// import { useAuth } from '../hooks/useAuth'; // Removed unused import
 
 const AiTutor = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -13,15 +13,15 @@ const AiTutor = () => {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef(null);
-    const { user } = useAuth();
+    // const { user } = useAuth(); // Removed unused variable 'user'
 
-    const scrollToBottom = () => {
+    const scrollToBottom = React.useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    }, []);
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages, isOpen]);
+    }, [messages, isOpen, scrollToBottom]);
 
     const handleSend = async (e) => {
         e.preventDefault();
@@ -39,17 +39,12 @@ const AiTutor = () => {
         setIsLoading(true);
 
         try {
-            const token = localStorage.getItem('token');
             const history = messages.map(msg => ({
                 sender: msg.sender,
                 text: msg.text
             }));
 
-            const { data } = await axios.post(
-                `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/ai/chat`,
-                { message: userMessage.text, history },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const { data } = await api.post('/ai/chat', { message: userMessage.text, history });
 
             const aiMessage = {
                 id: Date.now() + 1,
@@ -131,8 +126,8 @@ const AiTutor = () => {
                                     className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                                 >
                                     <div className={`max-w-[85%] rounded-2xl p-3.5 text-sm leading-relaxed ${msg.sender === 'user'
-                                            ? 'bg-indigo-600 text-white rounded-br-none'
-                                            : 'bg-slate-800 text-slate-200 rounded-bl-none border border-white/5'
+                                        ? 'bg-indigo-600 text-white rounded-br-none'
+                                        : 'bg-slate-800 text-slate-200 rounded-bl-none border border-white/5'
                                         } ${msg.isError ? 'bg-red-500/10 border-red-500/50 text-red-400' : ''}`}>
                                         <p className="whitespace-pre-wrap">{msg.text}</p>
                                         <p className={`text-[9px] mt-1.5 opacity-50 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
@@ -192,8 +187,8 @@ const AiTutor = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
                 className={`p-4 rounded-full shadow-2xl transition-all duration-300 relative group ${isOpen
-                        ? 'bg-slate-800 text-white hover:bg-slate-700'
-                        : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-indigo-500/25'
+                    ? 'bg-slate-800 text-white hover:bg-slate-700'
+                    : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-indigo-500/25'
                     }`}
             >
                 {isOpen ? <X size={24} /> : <Bot size={24} />}

@@ -50,6 +50,7 @@ const FacultyResources = () => {
             toast.success('Resource added successfully!');
             fetchCourses(); // Sync list
         } catch (error) {
+            console.error(error);
             toast.error('Failed to add resource');
         }
     };
@@ -63,6 +64,7 @@ const FacultyResources = () => {
             toast.info('Resource removed');
             fetchCourses();
         } catch (error) {
+            console.error(error);
             toast.error('Failed to remove resource');
         }
     };

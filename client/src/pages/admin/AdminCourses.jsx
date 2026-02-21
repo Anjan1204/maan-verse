@@ -85,7 +85,7 @@ const AdminCourses = () => {
                 await api.delete(`/courses/${id}`);
                 toast.success('Course deleted successfully');
                 fetchCourses();
-            } catch (error) {
+            } catch {
                 toast.error('Failed to delete course');
             }
         }
@@ -96,7 +96,7 @@ const AdminCourses = () => {
             await api.put(`/courses/${course._id}`, { isPublished: !course.isPublished });
             toast.success(`Course ${!course.isPublished ? 'published' : 'unpublished'}`);
             fetchCourses();
-        } catch (error) {
+        } catch {
             toast.error('Failed to update status');
         }
     };
@@ -170,7 +170,7 @@ const AdminCourses = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-white font-bold">${course.price}</span>
+                                        <span className="text-white font-bold">₹{course.price}</span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <button
@@ -254,7 +254,7 @@ const AdminCourses = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">Price ($)</label>
+                                    <label className="block text-sm font-medium text-gray-300 mb-2">Price (₹)</label>
                                     <input
                                         type="number"
                                         value={formData.price}

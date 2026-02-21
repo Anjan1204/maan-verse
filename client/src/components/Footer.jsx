@@ -39,7 +39,7 @@ const Footer = () => {
                 { Icon: GithubAnjan, href: 'https://github.com/_anjan_1211' },
                 { Icon: Instagram, href: 'https://www.instagram.com/_anjan_1211?igsh=MXRtZmt2c2c1dTZqbQ==' },
                 { Icon: Linkedin, href: 'https://www.linkedin.com/in/mahek-shah-aab221317?' }
-              ].map(({ Icon, href }, index) => (
+              ].map(({ Icon: _SocialIcon, href }, index) => (
                 <a
                   key={index}
                   href={href}
@@ -47,7 +47,7 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-dark border border-gray-700 flex items-center justify-center text-gray-400 hover:text-white hover:border-primary hover:bg-primary/10 transition-all duration-300"
                 >
-                  <Icon size={18} />
+                  <_SocialIcon size={18} />
                 </a>
               ))}
             </div>

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, Info, AlertTriangle, Calendar, FileText, MessageSquare, ExternalLink, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../hooks/useAuth';
+import { useSocket } from '../hooks/useSocket';
 
 const NotificationDropdown = () => {
     const { user } = useAuth();
@@ -25,7 +25,7 @@ const NotificationDropdown = () => {
     }, []);
 
     // Fetch notifications
-    const fetchNotifications = async () => {
+    const fetchNotifications = useCallback(async () => {
         if (!user) return;
         setLoading(true);
         try {
@@ -36,11 +36,11 @@ const NotificationDropdown = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
         fetchNotifications();
-    }, [user]);
+    }, [fetchNotifications]);
 
     // Socket Integration
     useEffect(() => {

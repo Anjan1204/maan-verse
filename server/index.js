@@ -22,6 +22,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 const allowedOrigins = [
     process.env.CLIENT_URL,
     'http://localhost:5173',
+    'http://localhost:5174',
     'https://maan-verse.netlify.app' // Explicit production origin
 ].filter(origin => origin); // Remove undefined/null
 
@@ -53,6 +54,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/', (req, res) => {
     res.json({ message: 'MAAN-verse API is running...' });
 });
+
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/student', require('./routes/studentRoutes'));

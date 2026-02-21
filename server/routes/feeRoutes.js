@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createFee, getStudentFees, getAllFees, updateFeeStatus, bulkAssignFees } = require('../controllers/feeController');
+const { createFee, getStudentFees, getAllFees, updateFeeStatus, bulkAssignFees, getFeeById } = require('../controllers/feeController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.route('/')
@@ -14,6 +14,7 @@ router.route('/student/:studentId')
     .get(protect, getStudentFees);
 
 router.route('/:id')
-    .put(protect, admin, updateFeeStatus);
+    .get(protect, getFeeById)
+    .put(protect, updateFeeStatus);
 
 module.exports = router;

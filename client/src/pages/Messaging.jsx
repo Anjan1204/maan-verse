@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Send, User, MessageCircle, Search, Clock, Check, CheckCheck } from 'lucide-react';
 import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../hooks/useAuth';
+import { useSocket } from '../hooks/useSocket';
 import { toast, ToastContainer } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,9 +18,30 @@ const Messaging = () => {
     const [showUserSearch, setShowUserSearch] = useState(false);
     const socket = useSocket();
 
+    const fetchConversations = React.useCallback(async () => {
+        try {
+            const { data } = await api.get('/messaging/conversations');
+            setConversations(data);
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to load chats');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchConversations();
-    }, []);
+    }, [fetchConversations]);
+
+    const fetchAllUsers = React.useCallback(async () => {
+        try {
+            const { data } = await api.get(`/users/search?search=${searchQuery}`);
+            setAllUsers(data.filter(u => u._id !== user._id));
+        } catch (error) {
+            console.error(error);
+        }
+    }, [searchQuery, user._id]);
 
     useEffect(() => {
         if (!searchQuery) {
@@ -32,7 +53,16 @@ const Messaging = () => {
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchQuery]);
+    }, [searchQuery, fetchAllUsers]);
+
+    const fetchMessages = React.useCallback(async (id) => {
+        try {
+            const { data } = await api.get(`/messaging/conversation/${id}`);
+            setMessages(data);
+        } catch (error) {
+            console.error(error);
+        }
+    }, []);
 
     useEffect(() => {
         if (activeConversation) {
@@ -58,32 +88,13 @@ const Messaging = () => {
                 };
             }
         }
-    }, [activeConversation, socket]);
+    }, [activeConversation, socket, fetchMessages, fetchConversations]);
 
-    const fetchConversations = async () => {
-        try {
-            const { data } = await api.get('/messaging/conversations');
-            setConversations(data);
-        } catch (error) {
-            toast.error('Failed to load chats');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // const fetchConversations moved up
 
-    const fetchAllUsers = async () => {
-        try {
-            const { data } = await api.get(`/users/search?search=${searchQuery}`);
-            setAllUsers(data.filter(u => u._id !== user._id));
-        } catch (error) { }
-    };
+    // const fetchAllUsers moved up
 
-    const fetchMessages = async (id) => {
-        try {
-            const { data } = await api.get(`/messaging/conversation/${id}`);
-            setMessages(data);
-        } catch (error) { }
-    };
+    // const fetchMessages moved up
 
     const handleStartConversation = async (participantId) => {
         try {
@@ -92,6 +103,7 @@ const Messaging = () => {
             setShowUserSearch(false);
             fetchConversations();
         } catch (error) {
+            console.error(error);
             toast.error('Could not start chat');
         }
     };
@@ -114,6 +126,7 @@ const Messaging = () => {
             });
             fetchConversations();
         } catch (error) {
+            console.error(error);
             toast.error('Message failed to send');
         }
     };
@@ -259,7 +272,7 @@ const Messaging = () => {
 
                         {/* Messages Area */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar flex flex-col">
-                            {messages.map((msg, i) => {
+                            {messages.map((msg) => {
                                 const isMine = msg.sender._id === user._id;
                                 return (
                                     <div key={msg._id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>

@@ -62,10 +62,20 @@ const getAllFees = async (req, res) => {
 const updateFeeStatus = async (req, res) => {
     try {
         const { status, transactionId } = req.body;
-        const fee = await Fee.findById(req.params.id);
+        const fee = await Fee.findById(req.params.id).populate('student', 'name email');
 
         if (!fee) {
             return res.status(404).json({ message: 'Fee record not found' });
+        }
+
+        // Students can only mark their own fees as Paid
+        if (req.user.role === 'student') {
+            if (fee.student._id.toString() !== req.user._id.toString()) {
+                return res.status(401).json({ message: 'Not authorized' });
+            }
+            if (status !== 'Paid') {
+                return res.status(400).json({ message: 'Students can only update status to Paid' });
+            }
         }
 
         fee.status = status || fee.status;
@@ -76,6 +86,17 @@ const updateFeeStatus = async (req, res) => {
         }
 
         const updatedFee = await fee.save();
+
+        // Socket Notification
+        const io = req.app.get('io');
+        if (io) {
+            io.to('active-admins').emit('fee:updated', {
+                fee: updatedFee,
+                studentName: fee.student.name,
+                message: `${fee.student.name} has paid their ${fee.type} fee.`
+            });
+        }
+
         res.json(updatedFee);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -118,10 +139,33 @@ const bulkAssignFees = async (req, res) => {
     }
 };
 
+// @desc    Get fee by ID
+// @route   GET /api/fees/:id
+// @access  Private
+const getFeeById = async (req, res) => {
+    try {
+        const fee = await Fee.findById(req.params.id).populate('student', 'name email');
+
+        if (!fee) {
+            return res.status(404).json({ message: 'Fee record not found' });
+        }
+
+        // Students can only see their own fees
+        if (req.user.role === 'student' && fee.student._id.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
+        res.json(fee);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
 module.exports = {
     createFee,
     getStudentFees,
     getAllFees,
     updateFeeStatus,
-    bulkAssignFees
+    bulkAssignFees,
+    getFeeById
 };

@@ -1,30 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
-import { Download, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../utils/api';
+import { useAuth } from '../../hooks/useAuth';
+import { Download, CheckCircle, Clock, AlertCircle, CreditCard, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { generateInvoicePDF } from '../../utils/invoiceGenerator';
 
 const StudentFees = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [fees, setFees] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [downloading, setDownloading] = useState(false);
+    const [error, setError] = useState(null); // Added error state
+    const fetchFees = async () => {
+        try {
+            const { data } = await api.get(`/fees/student/${user._id}`);
+            setFees(data);
+            setLoading(false);
+        } catch (error) {
+            console.error(error);
+            setError('Financial link broken');
+            setLoading(false);
+        }
+    };
+
+    const handleDownloadInvoice = async (fee) => {
+        try {
+            setDownloading(true);
+            toast.info('Generating your invoice...');
+            await generateInvoicePDF(fee, user);
+            toast.success('Invoice downloaded!');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to generate invoice');
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    const handlePayment = (feeId) => {
+        navigate(`/student/pay-fee/${feeId}`);
+    };
 
     useEffect(() => {
-        const fetchFees = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/fees/student/${user._id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setFees(data);
-                setLoading(false);
-            } catch (error) {
-                console.error(error);
-                setLoading(false);
-            }
-        };
-
         if (user?._id) fetchFees();
     }, [user]);
+
+    if (loading && fees.length === 0) return (
+        <div className="flex flex-col items-center justify-center p-20">
+            <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Syncing Financial Records...</p>
+        </div>
+    );
 
     return (
         <div className="space-y-6">
@@ -34,23 +62,29 @@ const StudentFees = () => {
             </div>
 
             {/* Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-slate-800/50 p-5 rounded-2xl border border-white/5">
-                    <p className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Total Paid</p>
-                    <h3 className="text-2xl font-bold text-emerald-400">
-                        ${fees.filter(f => f.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
+            {error && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    {error}
+                </div>
+            )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="bg-slate-800/50 p-5 rounded-2xl border border-white/5 overflow-hidden">
+                    <p className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1 truncate">Total Paid</p>
+                    <h3 className="text-2xl font-bold text-emerald-400 truncate" title={`₹${fees.filter(f => f.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}`}>
+                        ₹{fees.filter(f => f.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
                     </h3>
                 </div>
-                <div className="bg-slate-800/50 p-5 rounded-2xl border border-white/5">
-                    <p className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Pending</p>
-                    <h3 className="text-2xl font-bold text-amber-400">
-                        ${fees.filter(f => f.status === 'Pending').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
+                <div className="bg-slate-800/50 p-5 rounded-2xl border border-white/5 overflow-hidden">
+                    <p className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1 truncate">Pending</p>
+                    <h3 className="text-2xl font-bold text-amber-400 truncate" title={`₹${fees.filter(f => f.status === 'Pending').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}`}>
+                        ₹{fees.filter(f => f.status === 'Pending').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
                     </h3>
                 </div>
-                <div className="bg-slate-800/50 p-5 rounded-2xl border border-white/5">
-                    <p className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">Overdue</p>
-                    <h3 className="text-2xl font-bold text-red-400">
-                        ${fees.filter(f => f.status === 'Overdue').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
+                <div className="bg-slate-800/50 p-5 rounded-2xl border border-white/5 overflow-hidden">
+                    <p className="text-slate-400 text-xs uppercase font-bold tracking-wider mb-1 truncate">Overdue</p>
+                    <h3 className="text-2xl font-bold text-red-400 truncate" title={`₹${fees.filter(f => f.status === 'Overdue').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}`}>
+                        ₹{fees.filter(f => f.status === 'Overdue').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}
                     </h3>
                 </div>
             </div>
@@ -82,11 +116,13 @@ const StudentFees = () => {
                                     <td className="p-4 font-medium text-white">{fee.type} Fee</td>
                                     <td className="p-4">{fee.semester}</td>
                                     <td className="p-4">{new Date(fee.dueDate).toLocaleDateString()}</td>
-                                    <td className="p-4">${fee.amount.toLocaleString()}</td>
+                                    <td className="p-4">
+                                        <p className="font-black text-white text-lg">₹{fee.amount.toLocaleString()}</p>
+                                    </td>
                                     <td className="p-4">
                                         <div className={`flex items-center gap-2 px-3 py-1 rounded-full w-fit text-xs font-bold border ${fee.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                fee.status === 'Pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                    'bg-red-500/10 text-red-400 border-red-500/20'
+                                            fee.status === 'Pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                'bg-red-500/10 text-red-400 border-red-500/20'
                                             }`}>
                                             {fee.status === 'Paid' ? <CheckCircle size={12} /> :
                                                 fee.status === 'Pending' ? <Clock size={12} /> : <AlertCircle size={12} />}
@@ -94,11 +130,25 @@ const StudentFees = () => {
                                         </div>
                                     </td>
                                     <td className="p-4 text-right">
-                                        {fee.status === 'Paid' && (
-                                            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white">
-                                                <Download size={16} />
-                                            </button>
-                                        )}
+                                        <div className="flex justify-end gap-2">
+                                            {fee.status === 'Paid' ? (
+                                                <button
+                                                    onClick={() => handleDownloadInvoice(fee)}
+                                                    disabled={downloading}
+                                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white disabled:opacity-50"
+                                                    title="Download Invoice"
+                                                >
+                                                    {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handlePayment(fee._id)}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20"
+                                                >
+                                                    <CreditCard size={12} /> Pay Now
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

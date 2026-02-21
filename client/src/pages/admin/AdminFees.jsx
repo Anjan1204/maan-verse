@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search,
@@ -18,6 +18,9 @@ import {
     Loader2
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import { useSocket } from '../../hooks/useSocket';
+import { toast, ToastContainer } from 'react-toastify';
+import { generateInvoicePDF } from '../../utils/invoiceGenerator';
 
 const AdminFees = () => {
     const [fees, setFees] = useState([]);
@@ -29,6 +32,7 @@ const AdminFees = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [searching, setSearching] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
+    const socket = useSocket();
 
     const [formData, setFormData] = useState({
         studentId: '',
@@ -43,13 +47,25 @@ const AdminFees = () => {
         fetchFees();
     }, []);
 
+    useEffect(() => {
+        if (socket) {
+            socket.emit('admin:join');
+
+            socket.on('fee:updated', ({ studentName, message }) => {
+                fetchFees();
+                toast.success(message || `Fee payment received from ${studentName}`);
+            });
+
+            return () => {
+                socket.off('fee:updated');
+            };
+        }
+    }, [socket]);
+
     const fetchFees = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/fees`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const { data } = await api.get('/fees');
             setFees(data);
         } catch (error) {
             console.error(error);
@@ -66,10 +82,7 @@ const AdminFees = () => {
         }
         setSearching(true);
         try {
-            const token = localStorage.getItem('token');
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/search?query=${val}&role=student`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const { data } = await api.get(`/users/search?query=${val}&role=student`);
             setSearchResults(data);
         } catch (error) {
             console.error(error);
@@ -81,16 +94,13 @@ const AdminFees = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const url = modalType === 'single'
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/fees`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/fees/bulk`;
+            const url = modalType === 'single' ? '/fees' : '/fees/bulk';
 
             const payload = modalType === 'single'
                 ? { ...formData, studentId: selectedStudent?._id }
                 : formData;
 
-            await axios.post(url, payload, { headers: { Authorization: `Bearer ${token}` } });
+            await api.post(url, payload);
 
             setShowModal(false);
             setFormData({ studentId: '', amount: '', type: 'Tuition', semester: '1st', branch: '', dueDate: '' });
@@ -106,12 +116,7 @@ const AdminFees = () => {
     const markAsPaid = async (id) => {
         if (!window.confirm('Mark this fee as PAID?')) return;
         try {
-            const token = localStorage.getItem('token');
-            await axios.put(
-                `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/fees/${id}`,
-                { status: 'Paid' },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await api.put(`/fees/${id}`, { status: 'Paid' });
             fetchFees();
         } catch (error) {
             console.error(error);
@@ -163,8 +168,8 @@ const AdminFees = () => {
                             <CheckCircle size={80} className="text-emerald-500" />
                         </div>
                         <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Collected</p>
-                        <h3 className="text-3xl font-black text-white mt-2">
-                            ${chartData[0].value.toLocaleString()}
+                        <h3 className="text-3xl font-black text-white mt-2 truncate" title={`₹${chartData[0].value.toLocaleString()}`}>
+                            ₹{chartData[0].value.toLocaleString()}
                         </h3>
                         <div className="mt-4 flex items-center gap-2 text-emerald-500 text-xs font-bold">
                             <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -176,8 +181,8 @@ const AdminFees = () => {
                             <Clock size={80} className="text-amber-500" />
                         </div>
                         <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Pending</p>
-                        <h3 className="text-3xl font-black text-white mt-2">
-                            ${chartData[1].value.toLocaleString()}
+                        <h3 className="text-3xl font-black text-white mt-2 truncate" title={`₹${chartData[1].value.toLocaleString()}`}>
+                            ₹{chartData[1].value.toLocaleString()}
                         </h3>
                         <div className="mt-4 flex items-center gap-2 text-amber-500 text-xs font-bold">
                             <span className="w-2 h-2 rounded-full bg-amber-500" />
@@ -189,8 +194,8 @@ const AdminFees = () => {
                             <XCircle size={80} className="text-red-500" />
                         </div>
                         <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Overdue</p>
-                        <h3 className="text-3xl font-black text-white mt-2">
-                            ${chartData[2].value.toLocaleString()}
+                        <h3 className="text-3xl font-black text-white mt-2 truncate" title={`₹${chartData[2].value.toLocaleString()}`}>
+                            ₹{chartData[2].value.toLocaleString()}
                         </h3>
                         <div className="mt-4 flex items-center gap-2 text-red-500 text-xs font-bold">
                             <span className="w-2 h-2 rounded-full bg-red-500" />
@@ -290,7 +295,7 @@ const AdminFees = () => {
                                         </td>
                                         <td className="p-6 font-bold text-slate-400 text-xs">{fee.semester}</td>
                                         <td className="p-6">
-                                            <p className="font-black text-white text-lg">${fee.amount.toLocaleString()}</p>
+                                            <p className="font-black text-white text-lg">₹{fee.amount.toLocaleString()}</p>
                                         </td>
                                         <td className="p-6">
                                             <div className="flex items-center gap-2 text-slate-400 font-bold text-xs">
@@ -307,7 +312,15 @@ const AdminFees = () => {
                                             </span>
                                         </td>
                                         <td className="p-6 text-right">
-                                            {fee.status !== 'Paid' && (
+                                            {fee.status === 'Paid' ? (
+                                                <button
+                                                    onClick={() => generateInvoicePDF(fee, fee.student)}
+                                                    className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
+                                                    title="Download Invoice"
+                                                >
+                                                    <Download size={16} />
+                                                </button>
+                                            ) : (
                                                 <button
                                                     onClick={() => markAsPaid(fee._id)}
                                                     className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 transition-all opacity-0 group-hover:opacity-100"
@@ -423,7 +436,7 @@ const AdminFees = () => {
 
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Fee Amount ($)</label>
+                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Fee Amount (₹)</label>
                                         <input
                                             type="number"
                                             required
@@ -479,6 +492,7 @@ const AdminFees = () => {
                     </div>
                 )}
             </AnimatePresence>
+            <ToastContainer theme="dark" position="bottom-right" />
         </div>
     );
 };

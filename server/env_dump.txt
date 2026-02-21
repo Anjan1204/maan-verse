@@ -1,0 +1,6 @@
+PORT=undefined
+MONGO_URI=undefined
+JWT_SECRET=undefined
+NODE_ENV=undefined
+EMAIL_USER=
+EMAIL_PASS=

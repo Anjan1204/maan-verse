@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Save, RotateCcw, Settings as SettingsIcon, Users, BookOpen, Bell } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 

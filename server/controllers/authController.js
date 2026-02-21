@@ -1,11 +1,6 @@
 const User = require('../models/User');
+const AdminRegistrationRequest = require('../models/AdminRegistrationRequest');
 const generateToken = require('../utils/generateToken');
-
-// @desc    Auth user & get token
-// @route   POST /api/auth/login
-// @access  Public
-const crypto = require('crypto');
-const loginRequests = require('../utils/loginRequests');
 
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
@@ -18,15 +13,13 @@ const authUser = async (req, res, next) => {
 
         if (user && (await user.matchPassword(password))) {
             // Check if user is admin
-            if (user.role === 'admin') {
-                if (!user.isApproved) {
-                    res.status(403);
-                    throw new Error('Admin approval pending. Please wait for the main admin to approve your account.');
-                }
+            if (user.role === 'admin' && !user.isApproved) {
+                res.status(403);
+                throw new Error('Admin approval pending. Please wait for the main admin to approve your account.');
             }
 
             // Normal login
-            res.json({
+            return res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
@@ -50,8 +43,6 @@ const authUser = async (req, res, next) => {
         next(error);
     }
 };
-
-const AdminRegistrationRequest = require('../models/AdminRegistrationRequest');
 
 // @desc    Register a new user
 // @route   POST /api/auth/register

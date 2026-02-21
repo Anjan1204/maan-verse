@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useSocket } from '../../context/SocketContext';
+import { useSocket } from '../../hooks/useSocket';
 import api from '../../utils/api';
 import {
     Calendar, Clock, BookOpen, ChevronRight, Bell, Activity, Award, PlayCircle, Star, ShoppingBag, CheckCircle, TrendingUp, AlertCircle, GraduationCap
@@ -46,8 +46,8 @@ const StudentDashboard = () => {
             const enrolledIds = dashboardData?.enrollments?.map(e => e.course._id) || [];
             const filtered = data.filter(c => !enrolledIds.includes(c._id));
             setAvailableCourses(filtered.slice(0, 4));
-        } catch (err) {
-            console.error('Failed to fetch courses', err);
+        } catch (error) {
+            console.error('Failed to fetch courses', error);
             // Don't block dashboard if courses fail
         }
     }, [dashboardData]);
@@ -404,7 +404,7 @@ const StudentDashboard = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                        <span className="text-xl font-black text-white">${course.price}</span>
+                                        <span className="text-xl font-black text-white">₹{course.price}</span>
                                         <button
                                             onClick={() => navigate(`/purchase/${course._id}`)}
                                             className="p-3 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary hover:text-white transition-all shadow-lg shadow-primary/10 active:scale-90"

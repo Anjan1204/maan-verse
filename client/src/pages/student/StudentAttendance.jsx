@@ -5,16 +5,18 @@ import { Calendar, Check, X, Filter } from 'lucide-react';
 const StudentAttendance = () => {
     const [attendance, setAttendance] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null); // Added error state
 
     useEffect(() => {
         const fetchAttendance = async () => {
             try {
                 const { data } = await api.get('/student/attendance');
                 setAttendance(data);
-            } catch (error) {
+                setLoading(false); // Set loading to false on success
+            } catch (error) { // Changed catch parameter to 'error'
                 console.error(error);
-            } finally {
-                setLoading(false);
+                setError('Failed to load classes');
+                setLoading(false); // Set loading to false on error
             }
         };
         fetchAttendance();
@@ -34,7 +36,13 @@ const StudentAttendance = () => {
                 </div>
             </div>
 
-            <div className="glass rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
+            {error && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-sm font-bold flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    {error}
+                </div>
+            )}
+            <div className="bg-white/[0.02] backdrop-blur-md rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden p-8 lg:p-12 relative group">
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary border border-primary/20">

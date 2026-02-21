@@ -18,21 +18,21 @@ const FacultyTimetable = () => {
     });
     const [publishLoading, setPublishLoading] = useState(false);
 
-    useEffect(() => {
-        fetchTimetable();
-    }, []);
-
-    const fetchTimetable = async () => {
+    const fetchTimetable = React.useCallback(async () => {
         try {
             const { data } = await api.get('/faculty/timetable');
             setTimetable(data);
-        } catch (error) {
-            console.error("Failed to fetch timetable", error);
+        } catch {
+            console.error("Failed to fetch timetable");
             // toast.error("Failed to fetch timetable");
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchTimetable();
+    }, [fetchTimetable]);
 
     const handlePublish = async () => {
         // Find a representative branch/sem from the current timetable to publish
@@ -97,6 +97,7 @@ const FacultyTimetable = () => {
                 setTimetable(timetable.filter(t => t.id !== id));
                 toast.info('Class cancelled');
             } catch (error) {
+                console.error(error);
                 toast.error('Failed to cancel class');
             }
         }

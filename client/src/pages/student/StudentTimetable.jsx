@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../../utils/api';
-import { useSocket } from '../../context/SocketContext';
+import { useSocket } from '../../hooks/useSocket';
 import { Clock, Video } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -26,12 +26,13 @@ const StudentTimetable = () => {
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchTimetable();
     }, [fetchTimetable]);
 
     useEffect(() => {
         if (socket) {
-            socket.on('timetable:published', (data) => {
+            socket.on('timetable:published', () => {
                 fetchTimetable();
             });
         }

@@ -60,7 +60,7 @@ const importData = async () => {
                 category: 'Development',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80',
-                price: 99,
+                price: 2499,
                 level: 'Beginner',
                 duration: '24 Weeks',
                 learningOutcomes: [
@@ -91,8 +91,8 @@ const importData = async () => {
                 description: 'Unlock the power of Python for data analysis, visualization, and machine learning.',
                 category: 'Development',
                 faculty: faculty2,
-                thumbnail: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80',
-                price: 89,
+                thumbnail: 'https://images.unsplash.com/photo-1527477396000-dc2173b95701?auto=format&fit=crop&w=800&q=80',
+                price: 1899,
                 level: 'Intermediate',
                 duration: '12 Weeks',
                 learningOutcomes: [
@@ -124,7 +124,7 @@ const importData = async () => {
                 category: 'Development',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80',
-                price: 110,
+                price: 2999,
                 level: 'All Levels',
                 duration: '16 Weeks',
                 learningOutcomes: [
@@ -156,7 +156,7 @@ const importData = async () => {
                 category: 'Development',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=800&q=80',
-                price: 150,
+                price: 4500,
                 level: 'Advanced',
                 duration: '10 Weeks',
                 learningOutcomes: [
@@ -188,7 +188,7 @@ const importData = async () => {
                 category: 'Development',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
-                price: 95,
+                price: 1599,
                 level: 'Beginner',
                 duration: '14 Weeks',
                 learningOutcomes: [
@@ -220,7 +220,7 @@ const importData = async () => {
                 category: 'Development',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80',
-                price: 130,
+                price: 3299,
                 level: 'Intermediate',
                 duration: '18 Weeks',
                 learningOutcomes: [
@@ -253,7 +253,7 @@ const importData = async () => {
                 category: 'Business',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
-                price: 79,
+                price: 1499,
                 level: 'Intermediate',
                 duration: '20 Weeks',
                 learningOutcomes: [
@@ -284,7 +284,7 @@ const importData = async () => {
                 category: 'Business',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80',
-                price: 140,
+                price: 3500,
                 level: 'Advanced',
                 duration: '12 Weeks',
                 learningOutcomes: [
@@ -315,7 +315,7 @@ const importData = async () => {
                 category: 'Business',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1543286386-713bdd548da4?auto=format&fit=crop&w=800&q=80',
-                price: 115,
+                price: 2799,
                 level: 'Intermediate',
                 duration: '14 Weeks',
                 learningOutcomes: [
@@ -346,7 +346,7 @@ const importData = async () => {
                 category: 'Business',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80',
-                price: 85,
+                price: 999,
                 level: 'Beginner',
                 duration: '8 Weeks',
                 learningOutcomes: [
@@ -376,8 +376,8 @@ const importData = async () => {
                 description: 'Close more deals and build lasting customer relationships.',
                 category: 'Business',
                 faculty: faculty1,
-                thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80',
-                price: 60,
+                thumbnail: 'https://images.unsplash.com/photo-1427751364703-fe5833483b6d?auto=format&fit=crop&w=800&q=80',
+                price: 749,
                 level: 'All Levels',
                 duration: '6 Weeks',
                 learningOutcomes: [
@@ -407,8 +407,8 @@ const importData = async () => {
                 description: 'From dropshipping to SaaS: how to launch and scale a digital venture.',
                 category: 'Business',
                 faculty: faculty2,
-                thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
-                price: 45,
+                thumbnail: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
+                price: 599,
                 level: 'Beginner',
                 duration: '10 Weeks',
                 learningOutcomes: [
@@ -440,8 +440,8 @@ const importData = async () => {
                 description: 'Learn Photoshop, Illustrator, and InDesign for professional branding.',
                 category: 'Design',
                 faculty: faculty1,
-                thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=800&q=80',
-                price: 70,
+                thumbnail: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80',
+                price: 1249,
                 level: 'Beginner',
                 duration: '12 Weeks',
                 learningOutcomes: [
@@ -472,7 +472,7 @@ const importData = async () => {
                 category: 'Design',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1586717791821-3f44a563eb4c?auto=format&fit=crop&w=800&q=80',
-                price: 95,
+                price: 1699,
                 level: 'Intermediate',
                 duration: '14 Weeks',
                 learningOutcomes: [
@@ -502,8 +502,8 @@ const importData = async () => {
                 description: 'Bring your designs to life with animation and visual effects.',
                 category: 'Design',
                 faculty: faculty1,
-                thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
-                price: 110,
+                thumbnail: 'https://images.unsplash.com/photo-1492724441997-5dc865305da7?auto=format&fit=crop&w=800&q=80',
+                price: 2100,
                 level: 'Intermediate',
                 duration: '10 Weeks',
                 learningOutcomes: [
@@ -534,7 +534,7 @@ const importData = async () => {
                 category: 'Design',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?auto=format&fit=crop&w=800&q=80',
-                price: 85,
+                price: 1450,
                 level: 'Beginner',
                 duration: '16 Weeks',
                 learningOutcomes: [
@@ -565,7 +565,7 @@ const importData = async () => {
                 category: 'Design',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80',
-                price: 120,
+                price: 1999,
                 level: 'All Levels',
                 duration: '12 Weeks',
                 learningOutcomes: [
@@ -595,8 +595,8 @@ const importData = async () => {
                 description: 'Create iconic logos and cohesive brand identities for modern businesses.',
                 category: 'Design',
                 faculty: faculty2,
-                thumbnail: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80',
-                price: 65,
+                thumbnail: 'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?auto=format&fit=crop&w=800&q=80',
+                price: 899,
                 level: 'Beginner',
                 duration: '8 Weeks',
                 learningOutcomes: [
@@ -629,7 +629,7 @@ const importData = async () => {
                 category: 'Marketing',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80',
-                price: 65,
+                price: 949,
                 level: 'Beginner',
                 duration: '8 Weeks',
                 learningOutcomes: [
@@ -659,8 +659,8 @@ const importData = async () => {
                 description: 'Write engaging blogs, scripts, and emails that drive traffic.',
                 category: 'Marketing',
                 faculty: faculty2,
-                thumbnail: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80',
-                price: 55,
+                thumbnail: 'https://images.unsplash.com/photo-1499750310117-599d870e097d?auto=format&fit=crop&w=800&q=80',
+                price: 799,
                 level: 'Beginner',
                 duration: '6 Weeks',
                 learningOutcomes: [
@@ -691,7 +691,7 @@ const importData = async () => {
                 category: 'Marketing',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80',
-                price: 40,
+                price: 649,
                 level: 'Intermediate',
                 duration: '6 Weeks',
                 learningOutcomes: [
@@ -721,8 +721,8 @@ const importData = async () => {
                 description: 'Build your audience and monetize your content on YouTube.',
                 category: 'Marketing',
                 faculty: faculty2,
-                thumbnail: 'https://images.unsplash.com/photo-1541535881962-e66862300096?auto=format&fit=crop&w=800&q=80',
-                price: 75,
+                thumbnail: 'https://images.unsplash.com/photo-1611162616305-9b7a3293812b?auto=format&fit=crop&w=800&q=80',
+                price: 1199,
                 level: 'All Levels',
                 duration: '10 Weeks',
                 learningOutcomes: [
@@ -753,7 +753,7 @@ const importData = async () => {
                 category: 'Marketing',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1557838923-2985c318be48?auto=format&fit=crop&w=800&q=80',
-                price: 35,
+                price: 549,
                 level: 'Beginner',
                 duration: '4 Weeks',
                 learningOutcomes: [
@@ -784,7 +784,7 @@ const importData = async () => {
                 category: 'Marketing',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=800&q=80',
-                price: 85,
+                price: 1399,
                 level: 'Intermediate',
                 duration: '12 Weeks',
                 learningOutcomes: [
@@ -817,7 +817,7 @@ const importData = async () => {
                 category: 'Photography',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?auto=format&fit=crop&w=800&q=80',
-                price: 65,
+                price: 849,
                 level: 'Beginner',
                 duration: '10 Weeks',
                 learningOutcomes: [
@@ -848,7 +848,7 @@ const importData = async () => {
                 category: 'Photography',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=800&q=80',
-                price: 55,
+                price: 775,
                 level: 'Intermediate',
                 duration: '6 Weeks',
                 learningOutcomes: [
@@ -879,7 +879,7 @@ const importData = async () => {
                 category: 'Photography',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80',
-                price: 30,
+                price: 525,
                 level: 'All Levels',
                 duration: '4 Weeks',
                 learningOutcomes: [
@@ -910,7 +910,7 @@ const importData = async () => {
                 category: 'Music',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80',
-                price: 99,
+                price: 1099,
                 level: 'Intermediate',
                 duration: '12 Weeks',
                 learningOutcomes: [
@@ -941,7 +941,7 @@ const importData = async () => {
                 category: 'Music',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1520529612224-dbe759f2010a?auto=format&fit=crop&w=800&q=80',
-                price: 45,
+                price: 675,
                 level: 'Beginner',
                 duration: '8 Weeks',
                 learningOutcomes: [
@@ -972,7 +972,7 @@ const importData = async () => {
                 category: 'Music',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80',
-                price: 50,
+                price: 625,
                 level: 'All Levels',
                 duration: '10 Weeks',
                 learningOutcomes: [
@@ -1005,7 +1005,7 @@ const importData = async () => {
                 category: 'Health & Fitness',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80',
-                price: 40,
+                price: 550,
                 level: 'Beginner',
                 duration: '6 Weeks',
                 learningOutcomes: [
@@ -1036,7 +1036,7 @@ const importData = async () => {
                 category: 'Health & Fitness',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80',
-                price: 35,
+                price: 575,
                 level: 'Beginner',
                 duration: '8 Weeks',
                 learningOutcomes: [
@@ -1067,7 +1067,7 @@ const importData = async () => {
                 category: 'Health & Fitness',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80',
-                price: 55,
+                price: 699,
                 level: 'Beginner',
                 duration: '4 Weeks',
                 learningOutcomes: [
@@ -1098,7 +1098,7 @@ const importData = async () => {
                 category: 'Health & Fitness',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
-                price: 25,
+                price: 515,
                 level: 'All Levels',
                 duration: '6 Weeks',
                 learningOutcomes: [
@@ -1129,7 +1129,7 @@ const importData = async () => {
                 category: 'Health & Fitness',
                 faculty: faculty1,
                 thumbnail: 'https://images.unsplash.com/photo-1490818387583-1baba5e6382b?auto=format&fit=crop&w=800&q=80',
-                price: 30,
+                price: 535,
                 level: 'Intermediate',
                 duration: '4 Weeks',
                 learningOutcomes: [
@@ -1160,7 +1160,7 @@ const importData = async () => {
                 category: 'Health & Fitness',
                 faculty: faculty2,
                 thumbnail: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
-                price: 50,
+                price: 1299,
                 level: 'Intermediate',
                 duration: '12 Weeks',
                 learningOutcomes: [

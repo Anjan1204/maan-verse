@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Award, BookOpen, CheckCircle, Target, Sparkles, Brain, Zap } from 'lucide-react';
 import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { toast, ToastContainer } from 'react-toastify';
 import { motion } from 'framer-motion';
 
@@ -12,29 +12,32 @@ const AnalyticsPortal = () => {
     const [loading, setLoading] = useState(true);
     const [badges, setBadges] = useState([]);
 
-    useEffect(() => {
-        fetchAnalytics();
-        fetchBadges();
-    }, []);
-
-    const fetchAnalytics = async () => {
+    const fetchAnalytics = React.useCallback(async () => {
         try {
             const endpoint = user.role === 'faculty' ? '/analytics/faculty' : '/analytics/student';
             const { data } = await api.get(endpoint);
             setData(data);
         } catch (error) {
+            console.error(error);
             toast.error('Failed to sync performance data');
         } finally {
             setLoading(false);
         }
-    };
+    }, [user.role]);
 
-    const fetchBadges = async () => {
+    const fetchBadges = React.useCallback(async () => {
         try {
             const { data } = await api.get('/badges/my');
             setBadges(data);
-        } catch (error) { }
-    };
+        } catch (error) {
+            console.error("Badge fetch error:", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchAnalytics();
+        fetchBadges();
+    }, [fetchAnalytics, fetchBadges]);
 
     if (loading) return <div className="h-[60vh] flex items-center justify-center text-primary font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Processing Academic Intelligence...</div>;
 
@@ -64,7 +67,7 @@ const AnalyticsPortal = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
                     { label: 'Completion rate', value: user.role === 'faculty' ? `${data.totalStudents} Students` : `${Math.round(data.summary.overallProgress)}%`, icon: Target, color: 'text-primary' },
-                    { label: user.role === 'faculty' ? 'Total Revenue' : 'Avg. Grade', value: user.role === 'faculty' ? `$${data.totalEarnings}` : `${Math.round(data.summary.averageGrade)}%`, icon: Sparkles, color: 'text-amber-500' },
+                    { label: user.role === 'faculty' ? 'Total Revenue' : 'Avg. Grade', value: user.role === 'faculty' ? `₹${data.totalEarnings}` : `${Math.round(data.summary.averageGrade)}%`, icon: Sparkles, color: 'text-amber-500' },
                     { label: 'Active Tasks', value: user.role === 'faculty' ? data.coursePerformance.length : data.summary.totalCourses, icon: Brain, color: 'text-indigo-400' },
                     { label: 'Achievements', value: badges.length, icon: Award, color: 'text-emerald-500' }
                 ].map((stat, i) => (

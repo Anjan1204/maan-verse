@@ -19,8 +19,8 @@ const StudentExams = () => {
                 setExams(examsRes.data);
                 setResults(resultsRes.data);
                 setError(null);
-            } catch (err) {
-                console.error('Failed to fetch exams/results:', err);
+            } catch (error) {
+                console.error('Failed to fetch exams/results:', error);
                 setError('Failed to load data. Please try again.');
             } finally {
                 setLoading(false);
@@ -104,8 +104,8 @@ const StudentExams = () => {
                                             </td>
                                             <td className="py-6 text-center">
                                                 <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${exam.type === 'External'
-                                                        ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
-                                                        : 'bg-primary/10 text-primary border-primary/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]'
+                                                    ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
+                                                    : 'bg-primary/10 text-primary border-primary/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]'
                                                     }`}>
                                                     {exam.type}
                                                 </span>
@@ -141,8 +141,8 @@ const StudentExams = () => {
                                     <div key={j} className="flex justify-between items-center p-5 bg-white/[0.02] border border-white/5 rounded-[1.5rem] group hover:border-primary/30 transition-all hover:bg-white/[0.04]">
                                         <div className="flex items-center gap-4">
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border ${result.grade?.startsWith('A')
-                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
-                                                    : 'bg-primary/10 text-primary border-primary/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]'
+                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+                                                : 'bg-primary/10 text-primary border-primary/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]'
                                                 }`}>
                                                 {result.grade || 'N/A'}
                                             </div>
@@ -156,8 +156,8 @@ const StudentExams = () => {
                                         <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full rounded-full transition-all duration-1000 ${(result.marks / result.totalMarks) * 100 >= 90
-                                                        ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
-                                                        : 'bg-primary'
+                                                    ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                                                    : 'bg-primary'
                                                     }`}
                                                 style={{ width: `${(result.marks / result.totalMarks) * 100}%` }}
                                             ></div>

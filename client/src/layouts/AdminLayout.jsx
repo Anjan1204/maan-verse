@@ -15,12 +15,11 @@ import {
     CreditCard,
     DollarSign
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../hooks/useAuth';
+import { useSocket } from '../hooks/useSocket';
 import NotificationDropdown from '../components/NotificationDropdown';
 import AdminApprovalModal from '../components/AdminApprovalModal';
-import { motion, AnimatePresence } from 'framer-motion';
-import api from '../utils/api';
+import { AnimatePresence } from 'framer-motion';
 
 const AdminLayout = () => {
     const { logout, user } = useAuth();
@@ -29,20 +28,9 @@ const AdminLayout = () => {
     const location = useLocation();
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [globalSearch, setGlobalSearch] = useState('');
-    const [inquiries, setInquiries] = useState([]);
     const [approvalRequest, setApprovalRequest] = useState(null);
 
-    useEffect(() => {
-        const fetchInquiries = async () => {
-            try {
-                const { data } = await api.get('/inquiries');
-                setInquiries(data.filter(inq => inq.status === 'Pending'));
-            } catch (error) {
-                console.error('Failed to fetch inquiries', error);
-            }
-        };
-        fetchInquiries();
-    }, []);
+
 
     // Listen for admin approval requests and handle connection/reconnection
     useEffect(() => {
@@ -127,9 +115,7 @@ const AdminLayout = () => {
             />
 
             {/* Sidebar */}
-            <motion.aside
-                initial={{ width: 280 }}
-                animate={{ width: isSidebarOpen ? 280 : 80 }}
+            <aside
                 className={`${isSidebarOpen ? 'w-72' : 'w-20'} bg-dark border-r border-white/5 flex flex-col transition-all duration-300 fixed h-full z-20 shadow-2xl`}
             >
                 {/* Logo Area */}
@@ -185,7 +171,7 @@ const AdminLayout = () => {
                         )}
                     </div>
                 </div>
-            </motion.aside>
+            </aside>
 
             {/* Main Content */}
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'ml-72' : 'ml-20'}`}>

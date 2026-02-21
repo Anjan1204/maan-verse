@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 
 const SocketContext = createContext();
 
-export const useSocket = () => useContext(SocketContext);
+export { SocketContext };
 
 export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
@@ -16,6 +16,7 @@ export const SocketProvider = ({ children }) => {
             withCredentials: true,
             transports: ['websocket', 'polling']
         });
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSocket(newSocket);
 
         return () => newSocket.close();

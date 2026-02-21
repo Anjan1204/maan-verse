@@ -188,7 +188,8 @@ const CourseContentPage = () => {
             await generateCertificate(user.name, course.title, date, certificateId);
             toast.success('Certificate generated successfully!');
         } catch (error) {
-            toast.error('Failed to generate certificate');
+            console.error(error);
+            toast.error("Download blocked. Ensure your progress is tracked.");
         }
     };
 

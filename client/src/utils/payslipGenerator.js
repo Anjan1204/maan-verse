@@ -59,24 +59,24 @@ export const generatePayslipPDF = async (payroll, faculty) => {
                 <tbody>
                     <tr>
                         <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-weight: 600;">Basic Salary</td>
-                        <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600;">$${payroll.baseSalary.toLocaleString()}</td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600;">₹${payroll.baseSalary.toLocaleString()}</td>
                         <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: right;">-</td>
                     </tr>
                     <tr>
                         <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-weight: 600;">Bonuses / Incentives</td>
-                        <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600; color: #10b981;">+$${payroll.bonuses?.toLocaleString() || '0'}</td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600; color: #10b981;">+₹${payroll.bonuses?.toLocaleString() || '0'}</td>
                         <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: right;">-</td>
                     </tr>
                     <tr>
                         <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-weight: 600;">Tax / Deductions</td>
                         <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: right;">-</td>
-                        <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600; color: #ef4444;">-$${payroll.deductions?.toLocaleString() || '0'}</td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: 600; color: #ef4444;">-₹${payroll.deductions?.toLocaleString() || '0'}</td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr style="background: #eef2ff;">
                         <td style="padding: 15px; font-weight: 800; font-size: 16px; color: #1e293b;">NET PAYABLE</td>
-                        <td colspan="2" style="padding: 15px; text-align: right; font-weight: 900; font-size: 20px; color: #6366f1;">$${netSalary.toLocaleString()}</td>
+                        <td colspan="2" style="padding: 15px; text-align: right; font-weight: 900; font-size: 20px; color: #6366f1;">₹${netSalary.toLocaleString()}</td>
                     </tr>
                 </tfoot>
             </table>

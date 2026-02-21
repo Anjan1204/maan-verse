@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../hooks/useAuth';
+import { useSocket } from '../hooks/useSocket';
 import { motion } from 'framer-motion';
 import { Loader } from 'lucide-react';
 
