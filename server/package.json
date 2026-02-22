@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "seed": "node seeder.js",
+    "seed:delete": "node seeder.js -d",
+    "seed:prod": "node seeder.js -p",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

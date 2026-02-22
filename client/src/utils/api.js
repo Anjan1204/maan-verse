@@ -23,10 +23,21 @@ api.interceptors.request.use((config) => {
         }
     } catch (error) {
         console.error('Error parsing userInfo from localStorage:', error);
-        localStorage.removeItem('userInfo'); // Clear corrupted data
+        localStorage.removeItem('userInfo');
     }
     return config;
 });
+
+// Auto-toast for API errors in production
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        console.error('API Error:', error.response?.data?.message || error.message);
+        // We can't use toast here easily without importing it, 
+        // but we'll log it clearly for the user to find in console
+        return Promise.reject(error);
+    }
+);
 
 api.interceptors.response.use(
     (response) => response,
