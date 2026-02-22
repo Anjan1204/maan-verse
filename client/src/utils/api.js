@@ -1,16 +1,17 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api`
-    : 'http://localhost:5000/api';
+const rawBaseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const baseURL = `${rawBaseURL.replace(/\/$/, '')}/api`;
 
 const api = axios.create({
     baseURL,
 });
 
 if (import.meta.env.MODE === 'production' && !import.meta.env.VITE_API_URL) {
-    console.warn('VITE_API_URL is not defined in production environment!');
+    console.error('CRITICAL: VITE_API_URL is not defined in production!');
 }
+
+console.log(`API Base URL: ${baseURL} (Mode: ${import.meta.env.MODE})`);
 
 api.interceptors.request.use((config) => {
     try {

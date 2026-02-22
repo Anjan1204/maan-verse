@@ -23,14 +23,21 @@ const CoursesPage = () => {
         const fetchData = async () => {
             try {
                 const coursesRes = await api.get('/courses');
-                setCourses(coursesRes.data);
+                if (Array.isArray(coursesRes.data)) {
+                    setCourses(coursesRes.data);
+                } else {
+                    console.error('Courses data is not an array:', coursesRes.data);
+                }
 
                 if (user && user.role === 'student') {
                     const enrollRes = await api.get('/enrollments/my');
                     setMyEnrollments(enrollRes.data.map(e => e.course._id));
                 }
             } catch (error) {
-                console.error(error);
+                console.error('FETCH ERROR:', error.message);
+                if (error.response) {
+                    console.error('Response Error:', error.response.status, error.response.data);
+                }
             } finally {
                 setLoading(false);
             }
