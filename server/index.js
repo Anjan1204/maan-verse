@@ -52,11 +52,21 @@ app.get('/api/status', async (req, res) => {
     try {
         const Course = require('./models/Course');
         const courseCount = await Course.countDocuments();
+
+        // Category breakdown
+        const categories = await Course.aggregate([
+            { $group: { _id: "$category", count: { $sum: 1 } } }
+        ]);
+
         res.json({
             status: 'online',
             environment: process.env.NODE_ENV,
             database: 'connected',
-            courseCount
+            courseCount,
+            categoryBreakdown: categories.reduce((acc, curr) => {
+                acc[curr._id] = curr.count;
+                return acc;
+            }, {})
         });
     } catch (error) {
         res.status(500).json({ status: 'error', message: error.message });

@@ -9,8 +9,10 @@ connectDB();
 
 const importData = async () => {
     try {
+        console.log(`Connecting to: ${mongoose.connection.host}`);
         await Course.deleteMany();
         await User.deleteMany();
+        console.log('Existing data cleared.');
 
         const users = [
             { name: 'Admin User', email: 'admin@example.com', password: 'password123', role: 'admin' },
@@ -1135,7 +1137,7 @@ const importData = async () => {
         ];
 
         await Course.insertMany(allCourses);
-        console.log('Data Imported!');
+        console.log(`Successfully Imported ${allCourses.length} Courses!`);
         process.exit();
     } catch (error) {
         console.error(`${error}`);
