@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../../utils/api';
-import { User, Mail, Phone, Briefcase, Calendar, Building2, Award, Camera, Save, X, CheckCircle, AlertCircle, Upload } from 'lucide-react';
+import { User, Mail, Phone, Briefcase, Calendar, Building2, Award, Camera, Save, X, CheckCircle, AlertCircle, Upload, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -207,13 +207,22 @@ const AdminProfile = () => {
                     <p className="text-gray-400 mt-2">Manage your personal and administrative information</p>
                 </div>
                 {!isEditing && (
-                    <button
-                        onClick={() => setIsEditing(true)}
-                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center gap-2"
-                    >
-                        <User size={18} />
-                        Edit Profile
-                    </button>
+                    <div className="flex gap-4">
+                        <div className="px-6 py-3 bg-primary/10 border border-primary/20 rounded-2xl flex items-center gap-3">
+                            <Sparkles size={16} className="text-primary" />
+                            <div className="flex flex-col">
+                                <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Academic XP</span>
+                                <span className="text-sm font-black text-white leading-none">{profile?.lifetimePoints || 0}</span>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center gap-2"
+                        >
+                            <User size={18} />
+                            Edit Profile
+                        </button>
+                    </div>
                 )}
             </div>
 

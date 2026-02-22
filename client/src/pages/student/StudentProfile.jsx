@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { User, Phone, MapPin, Calendar, Mail, Save, Upload, GraduationCap, BookOpen } from 'lucide-react';
+import { User, Phone, MapPin, Calendar, Mail, Save, Upload, GraduationCap, BookOpen, Sparkles } from 'lucide-react';
 import { toast } from 'react-toastify';
 import api from '../../utils/api';
 
@@ -97,6 +97,13 @@ const StudentProfile = () => {
                     <div className="px-6 py-3 bg-white/5 border border-white/5 rounded-2xl flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         <span className="text-xs font-black text-white uppercase tracking-wider">Account Active</span>
+                    </div>
+                    <div className="px-6 py-3 bg-primary/10 border border-primary/20 rounded-2xl flex items-center gap-3">
+                        <Sparkles size={16} className="text-primary" />
+                        <div className="flex flex-col">
+                            <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Lifetime Achievement</span>
+                            <span className="text-sm font-black text-white leading-none">{user?.lifetimePoints || 0} XP</span>
+                        </div>
                     </div>
                 </div>
             </div>

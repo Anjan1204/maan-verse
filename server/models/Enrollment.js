@@ -21,6 +21,10 @@ const enrollmentSchema = mongoose.Schema({
     isCompleted: {
         type: Boolean,
         default: false,
+    },
+    coursePoints: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true,

@@ -159,7 +159,6 @@ const deleteCourse = async (req, res, next) => {
 // @access  Private/Admin
 const getAllCoursesAdmin = async (req, res, next) => {
     try {
-
         const keyword = req.query.keyword
             ? {
                 title: {
@@ -171,13 +170,39 @@ const getAllCoursesAdmin = async (req, res, next) => {
 
         const category = req.query.category ? { category: req.query.category } : {};
 
-
         // Admin sees ALL courses, not just published ones
         const courses = await Course.find({ ...keyword, ...category }).populate('faculty', 'name');
 
         res.json(courses);
     } catch (error) {
         console.error('Error in getAllCoursesAdmin:', error);
+        next(error);
+    }
+};
+
+// @desc    Get course counts by category
+// @route   GET /api/courses/categories/stats
+// @access  Public
+const getCategoryStats = async (req, res, next) => {
+    try {
+        const stats = await Course.aggregate([
+            { $match: { isPublished: true } },
+            {
+                $group: {
+                    _id: '$category',
+                    count: { $sum: 1 },
+                },
+            },
+        ]);
+
+        // Convert array of { _id, count } to object { categoryName: count }
+        const formattedStats = stats.reduce((acc, curr) => {
+            acc[curr._id] = curr.count;
+            return acc;
+        }, {});
+
+        res.json(formattedStats);
+    } catch (error) {
         next(error);
     }
 };
@@ -189,4 +214,5 @@ module.exports = {
     updateCourse,
     deleteCourse,
     getAllCoursesAdmin,
+    getCategoryStats,
 };

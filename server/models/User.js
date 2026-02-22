@@ -79,6 +79,10 @@ const userSchema = mongoose.Schema({
     },
     lastLogin: {
         type: Date,
+    },
+    lifetimePoints: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true,

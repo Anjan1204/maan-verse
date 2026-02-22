@@ -1,53 +1,78 @@
 import React from 'react';
-import { Download, FileText, Link as LinkIcon, Video, ExternalLink } from 'lucide-react';
+import { Download, FileText, Link as LinkIcon, Video, ExternalLink, Sparkles } from 'lucide-react';
 
 const ResourceSection = ({ resources = [] }) => {
     const getIcon = (type) => {
         switch (type) {
-            case 'PDF': return <FileText className="text-red-400" />;
-            case 'Video': return <Video className="text-indigo-400" />;
-            case 'Link': return <LinkIcon className="text-emerald-400" />;
-            default: return <FileText className="text-gray-400" />;
+            case 'PDF': return <FileText size={24} className="text-red-400 group-hover:scale-110 transition-transform" />;
+            case 'Video': return <Video size={24} className="text-indigo-400 group-hover:scale-110 transition-transform" />;
+            case 'Link': return <LinkIcon size={24} className="text-emerald-400 group-hover:scale-110 transition-transform" />;
+            default: return <FileText size={24} className="text-gray-400" />;
         }
     };
 
     return (
-        <div className="space-y-8 max-w-4xl mx-auto pb-20">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-12 max-w-5xl mx-auto pb-24">
+            <div className="flex justify-between items-center px-4">
+                <div className="space-y-1">
+                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Knowledge Base</span>
+                    <h3 className="text-2xl font-black text-white">Supplemental Assets</h3>
+                </div>
+                <div className="bg-white/5 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    {resources.length} Available
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
                 {resources.length === 0 ? (
-                    <div className="col-span-2 text-center py-20 glass rounded-[3rem] border-2 border-dashed border-white/5">
-                        <FileText size={48} className="mx-auto mb-4 opacity-20" />
-                        <h3 className="text-xl font-black text-gray-500">No Extra Resources Yet</h3>
-                        <p className="text-sm text-gray-600 font-bold uppercase tracking-widest mt-2">Check back later for supplemental material</p>
+                    <div className="col-span-2 text-center py-32 glass rounded-[4rem] border-2 border-dashed border-white/5 bg-gradient-to-br from-white/[0.01] to-transparent">
+                        <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6">
+                            <FileText size={48} className="opacity-20" />
+                        </div>
+                        <h3 className="text-2xl font-black text-gray-500 italic">No supplemental assets found</h3>
+                        <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.25em] mt-4">The academic repository is currently empty</p>
                     </div>
                 ) : (
                     resources.map((resource, index) => (
-                        <div key={index} className="glass p-6 rounded-[2rem] border border-white/5 flex items-center justify-between group hover:border-primary/30 transition-all">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-xl">
+                        <div key={index} className="glass p-8 rounded-[3rem] border border-white/5 flex items-center justify-between group hover:border-primary/40 hover:bg-white/[0.04] transition-all duration-500 shadow-xl">
+                            <div className="flex items-center gap-6">
+                                <div className="w-16 h-16 rounded-[1.5rem] bg-white/[0.03] border border-white/5 flex items-center justify-center text-xl shadow-inner group-hover:bg-primary/10 transition-colors">
                                     {getIcon(resource.type)}
                                 </div>
-                                <div className="space-y-1">
-                                    <h4 className="font-bold text-white tracking-tight">{resource.title}</h4>
-                                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{resource.type}</p>
+                                <div className="space-y-1.5">
+                                    <h4 className="font-black text-white text-lg tracking-tight group-hover:text-primary transition-colors">{resource.title}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${resource.type === 'PDF' ? 'bg-red-500' : resource.type === 'Video' ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
+                                        <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">{resource.type} ARCHIVE</p>
+                                    </div>
                                 </div>
                             </div>
                             <button
                                 onClick={() => window.open(resource.url, '_blank')}
-                                className="p-3 bg-white/5 rounded-xl text-gray-400 group-hover:bg-primary group-hover:text-white transition-all shadow-xl"
+                                className="w-14 h-14 bg-white/[0.03] border border-white/10 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-500 shadow-2xl hover:scale-110 active:scale-90"
                             >
-                                {resource.type === 'Link' ? <ExternalLink size={20} /> : <Download size={20} />}
+                                {resource.type === 'Link' ? <ExternalLink size={24} /> : <Download size={24} />}
                             </button>
                         </div>
                     ))
                 )}
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-500/10 to-transparent p-10 rounded-[3rem] border border-indigo-500/20">
-                <h4 className="text-sm font-black text-primary uppercase tracking-[0.2em] mb-4">Pro Tip</h4>
-                <p className="text-gray-400 leading-relaxed font-bold italic text-sm">
-                    Supplemental materials are curated to help you master the course objectives. We recommend reviewing these before attempting the final assessment.
-                </p>
+            <div className="mx-4 p-12 bg-gradient-to-tr from-primary/10 via-transparent to-secondary/5 rounded-[4rem] border border-white/5 relative overflow-hidden group/tip">
+                <div className="absolute right-0 top-0 p-10 opacity-[0.03] rotate-12 group-hover/tip:scale-150 transition-transform duration-1000">
+                    <Sparkles size={160} />
+                </div>
+                <div className="relative z-10 flex gap-8 items-start">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center text-primary flex-shrink-0 animate-pulse">
+                        <ExternalLink size={28} />
+                    </div>
+                    <div className="space-y-3">
+                        <h4 className="text-xs font-black text-primary uppercase tracking-[0.3em]">Mastery Strategy</h4>
+                        <p className="text-gray-400 leading-relaxed font-bold italic text-base">
+                            "Leverage these assets to deepen your understanding beyond the standard curriculum. Top percentile students spend average 40% more time in the supplemental repository."
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     );

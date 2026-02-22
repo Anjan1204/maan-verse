@@ -57,6 +57,8 @@ const getMyEnrollments = async (req, res, next) => {
     }
 };
 
+const User = require('../models/User');
+
 // @desc    Update progress for an enrollment
 // @route   PUT /api/enrollments/progress
 // @access  Private/Student
@@ -78,6 +80,16 @@ const updateProgress = async (req, res, next) => {
         if (!enrollment.completedChapters.includes(chapterId)) {
             enrollment.completedChapters.push(chapterId);
 
+            // Award Points: 100 per normal chapter
+            enrollment.coursePoints = (enrollment.coursePoints || 0) + 100;
+
+            // Update Global User Points
+            const user = await User.findById(req.user._id);
+            if (user) {
+                user.lifetimePoints = (user.lifetimePoints || 0) + 100;
+                await user.save();
+            }
+
             // Calculate percentage
             const totalChapters = enrollment.course.chapters?.length || 1;
             const completedCount = enrollment.completedChapters.length;
@@ -85,6 +97,12 @@ const updateProgress = async (req, res, next) => {
 
             if (enrollment.progress === 100) {
                 enrollment.isCompleted = true;
+                // Bonus for course completion
+                enrollment.coursePoints += 500;
+                if (user) {
+                    user.lifetimePoints += 500;
+                    await user.save();
+                }
             }
 
             await enrollment.save();

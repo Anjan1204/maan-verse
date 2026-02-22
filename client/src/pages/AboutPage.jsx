@@ -5,7 +5,7 @@ import { Users, Target, Book, Trophy } from 'lucide-react';
 const AboutPage = () => {
   const stats = [
     { label: 'Students', value: '10k+', icon: Users },
-    { label: 'Courses', value: '500+', icon: Book },
+    { label: 'Courses', value: '80+', icon: Book },
     { label: 'Instructors', value: '50+', icon: Target },
     { label: 'Awards', value: '15+', icon: Trophy },
   ];

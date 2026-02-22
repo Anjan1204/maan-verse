@@ -7,8 +7,12 @@ const {
     updateCourse,
     deleteCourse,
     getAllCoursesAdmin,
+    getCategoryStats,
 } = require('../controllers/courseController');
 const { protect, faculty, admin } = require('../middleware/authMiddleware');
+
+// Public route to get category stats
+router.get('/categories/stats', getCategoryStats);
 
 // Admin route to get all courses (must be before '/' route)
 router.get('/admin/all', protect, admin, getAllCoursesAdmin);
