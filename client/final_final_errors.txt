@@ -1,6 +1,0 @@
-
-C:\Users\WIN 11\Desktop\maan-verse\client\src\pages\student\StudentFees.jsx
-  15:12  error  'error' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]|motion|React/u  no-unused-vars
-
-??? 1 problem (1 error, 0 warnings)
-
