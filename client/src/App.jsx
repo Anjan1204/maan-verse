@@ -50,83 +50,81 @@ import StudentLayout from './layouts/StudentLayout';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen flex flex-col bg-dark">
-          <ToastContainer theme="dark" position="top-right" />
-          <Routes>
-            {/* Public Layout with Navbar */}
-            <Route element={<><Navbar /><div className="flex-grow"><Outlet /></div></>}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/courses" element={<CoursesPage />} />
-              <Route path="/purchase/:courseId" element={<PurchasePage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/help" element={<HelpPage />} />
+    <Router>
+      <div className="min-h-screen flex flex-col bg-dark">
+        <ToastContainer theme="dark" position="top-right" />
+        <Routes>
+          {/* Public Layout with Navbar */}
+          <Route element={<><Navbar /><div className="flex-grow"><Outlet /></div></>}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/courses" element={<CoursesPage />} />
+            <Route path="/purchase/:courseId" element={<PurchasePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/help" element={<HelpPage />} />
 
-              {/* Other Role Dashboards */}
-            </Route>
+            {/* Other Role Dashboards */}
+          </Route>
 
-            {/* Faculty Layout */}
-            <Route element={<ProtectedRoute roles={['faculty', 'admin']} />}>
-              <Route path="/faculty" element={<FacultyLayout />}>
-                <Route path="dashboard" element={<FacultyDashboard />} />
-                <Route path="profile" element={<FacultyProfile />} />
-                <Route path="attendance" element={<FacultyAttendance />} />
-                <Route path="timetable" element={<FacultyTimetable />} />
-                <Route path="students" element={<FacultyStudents />} />
-                <Route path="assignments" element={<FacultyAssignments />} />
-                <Route path="resources" element={<FacultyResources />} />
-                <Route path="notices" element={<StudentNotices />} />
-                <Route path="messaging" element={<Messaging />} />
-                <Route path="leave" element={<LeaveApplication />} />
-                <Route path="analytics" element={<AnalyticsPortal />} />
-                <Route path="payroll" element={<FacultyPayroll />} />
-                <Route path="grades" element={<FacultyStudents />} /> {/* Reusing component for now */}
-                <Route path="classes" element={<FacultyTimetable />} /> {/* Reusing component for now */}
-              </Route>
+          {/* Faculty Layout */}
+          <Route element={<ProtectedRoute roles={['faculty', 'admin']} />}>
+            <Route path="/faculty" element={<FacultyLayout />}>
+              <Route path="dashboard" element={<FacultyDashboard />} />
+              <Route path="profile" element={<FacultyProfile />} />
+              <Route path="attendance" element={<FacultyAttendance />} />
+              <Route path="timetable" element={<FacultyTimetable />} />
+              <Route path="students" element={<FacultyStudents />} />
+              <Route path="assignments" element={<FacultyAssignments />} />
+              <Route path="resources" element={<FacultyResources />} />
+              <Route path="notices" element={<StudentNotices />} />
+              <Route path="messaging" element={<Messaging />} />
+              <Route path="leave" element={<LeaveApplication />} />
+              <Route path="analytics" element={<AnalyticsPortal />} />
+              <Route path="payroll" element={<FacultyPayroll />} />
+              <Route path="grades" element={<FacultyStudents />} /> {/* Reusing component for now */}
+              <Route path="classes" element={<FacultyTimetable />} /> {/* Reusing component for now */}
             </Route>
+          </Route>
 
-            {/* Student Layout */}
-            <Route element={<ProtectedRoute roles={['student', 'admin']} />}>
-              <Route path="/student/course/:courseId" element={<CourseContentPage />} />
-              <Route path="/student" element={<StudentLayout />}>
-                <Route path="dashboard" element={<StudentDashboard />} />
-                <Route path="profile" element={<StudentProfile />} />
-                <Route path="attendance" element={<StudentAttendance />} />
-                <Route path="timetable" element={<StudentTimetable />} />
-                <Route path="exams" element={<StudentExams />} />
-                <Route path="notices" element={<StudentNotices />} />
-                <Route path="messaging" element={<Messaging />} />
-                <Route path="leave" element={<LeaveApplication />} />
-                <Route path="analytics" element={<AnalyticsPortal />} />
-                <Route path="fees" element={<StudentFees />} />
-                <Route path="pay-fee/:feeId" element={<FeePaymentPage />} />
-              </Route>
+          {/* Student Layout */}
+          <Route element={<ProtectedRoute roles={['student', 'admin']} />}>
+            <Route path="/student/course/:courseId" element={<CourseContentPage />} />
+            <Route path="/student" element={<StudentLayout />}>
+              <Route path="dashboard" element={<StudentDashboard />} />
+              <Route path="profile" element={<StudentProfile />} />
+              <Route path="attendance" element={<StudentAttendance />} />
+              <Route path="timetable" element={<StudentTimetable />} />
+              <Route path="exams" element={<StudentExams />} />
+              <Route path="notices" element={<StudentNotices />} />
+              <Route path="messaging" element={<Messaging />} />
+              <Route path="leave" element={<LeaveApplication />} />
+              <Route path="analytics" element={<AnalyticsPortal />} />
+              <Route path="fees" element={<StudentFees />} />
+              <Route path="pay-fee/:feeId" element={<FeePaymentPage />} />
             </Route>
+          </Route>
 
-            {/* Admin Layout (No Main Navbar) */}
-            <Route element={<ProtectedRoute roles={['admin']} />}>
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="users" element={<AdminUsers />} />
-                <Route path="courses" element={<AdminCourses />} />
-                <Route path="profile" element={<AdminProfile />} />
-                <Route path="leave" element={<LeaveApplication />} />
-                <Route path="finance" element={<AdminFees />} /> {/* Fallback or legacy */}
-                <Route path="fees" element={<AdminFees />} />
-                <Route path="payroll" element={<AdminPayroll />} />
-                <Route path="settings" element={<AdminSettings />} />
-              </Route>
+          {/* Admin Layout (No Main Navbar) */}
+          <Route element={<ProtectedRoute roles={['admin']} />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="courses" element={<AdminCourses />} />
+              <Route path="profile" element={<AdminProfile />} />
+              <Route path="leave" element={<LeaveApplication />} />
+              <Route path="finance" element={<AdminFees />} /> {/* Fallback or legacy */}
+              <Route path="fees" element={<AdminFees />} />
+              <Route path="payroll" element={<AdminPayroll />} />
+              <Route path="settings" element={<AdminSettings />} />
             </Route>
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
+          </Route>
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

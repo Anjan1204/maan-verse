@@ -5,8 +5,14 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
-        const userInfo = localStorage.getItem('userInfo');
-        return userInfo ? JSON.parse(userInfo) : null;
+        try {
+            const userInfo = localStorage.getItem('userInfo');
+            return userInfo ? JSON.parse(userInfo) : null;
+        } catch (error) {
+            console.error('Initial auth check failed:', error);
+            localStorage.removeItem('userInfo');
+            return null;
+        }
     });
     // const [loading, setLoading] = useState(false); // Removed unused variable 'loading'
 

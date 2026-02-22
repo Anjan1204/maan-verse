@@ -13,9 +13,17 @@ if (import.meta.env.MODE === 'production' && !import.meta.env.VITE_API_URL) {
 }
 
 api.interceptors.request.use((config) => {
-    const user = JSON.parse(localStorage.getItem('userInfo'));
-    if (user && user.token) {
-        config.headers.Authorization = `Bearer ${user.token}`;
+    try {
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) {
+            const user = JSON.parse(userInfo);
+            if (user && user.token) {
+                config.headers.Authorization = `Bearer ${user.token}`;
+            }
+        }
+    } catch (error) {
+        console.error('Error parsing userInfo from localStorage:', error);
+        localStorage.removeItem('userInfo'); // Clear corrupted data
     }
     return config;
 });
