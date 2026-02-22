@@ -12,6 +12,10 @@ export const SocketProvider = ({ children }) => {
         // Use the base URL for socket connection, not the API URL
         const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+        if (import.meta.env.MODE === 'production' && !import.meta.env.VITE_API_URL) {
+            console.error('SOCKET_URL (VITE_API_URL) is missing in production!');
+        }
+
         const newSocket = io(SOCKET_URL, {
             withCredentials: true,
             transports: ['websocket', 'polling']
