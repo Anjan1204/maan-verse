@@ -1,9 +1,0 @@
---- USER DATA ---
-[STUDENT] Name: Viya Shah, Branch: "", Sem: "2"
-
---- TIMETABLE DATA ---
-Total Timetable entries: 4
-[ENTRY] ID: 698751e6c12b098d31914d65, Day: Monday, Sem: "2", Branch: "mca", Published: false
-[ENTRY] ID: 6990bd66e85624c0fa7e0d98, Day: Tuesday, Sem: "4", Branch: "BBA", Published: false
-[ENTRY] ID: 6990c09cb1ee75b99526be3b, Day: Saturday, Sem: "4", Branch: "B tech", Published: true
-[ENTRY] ID: 6990c257f518ce3974606eb0, Day: Monday, Sem: "3", Branch: "BBA", Published: true
