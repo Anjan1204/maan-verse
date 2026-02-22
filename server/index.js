@@ -145,22 +145,24 @@ const startServer = async () => {
         const Course = require('./models/Course');
         const count = await Course.countDocuments();
         if (count === 0) {
-            console.log('Database empty, seeding sample course...');
-            const User = require('./models/User');
-            let admin = await User.findOne({ role: 'admin' });
-            if (!admin) {
-                admin = new User({ name: 'System Admin', email: 'admin@maanverse.com', password: 'password123', role: 'admin' });
-                await admin.save();
+            console.log('-------------------------------------------');
+            console.log('Database empty! Initiating FULL auto-seed...');
+            try {
+                const { importData } = require('./seeder');
+                await importData();
+                const newCount = await Course.countDocuments();
+                console.log(`Auto-seeding complete! Imported ${newCount} courses.`);
+                console.log('-------------------------------------------');
+            } catch (seedError) {
+                console.error('Auto-seeding failed:', seedError.message);
+                // Fallback: Create at least one admin if seeder failed
+                const User = require('./models/User');
+                let admin = await User.findOne({ role: 'admin' });
+                if (!admin) {
+                    admin = new User({ name: 'System Admin', email: 'admin@maanverse.com', password: 'password123', role: 'admin' });
+                    await admin.save();
+                }
             }
-            await new Course({
-                title: 'Introduction to MAAN-verse',
-                description: 'Welcome to the platform! This is a sample course automatically generated to ensure your production environment is working.',
-                category: 'General',
-                faculty: admin._id,
-                thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3',
-                price: 0,
-                isPublished: true
-            }).save();
         }
 
         const server = app.listen(PORT, () => {

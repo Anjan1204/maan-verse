@@ -4,9 +4,6 @@ const User = require('./models/User');
 const Course = require('./models/Course');
 const connectDB = require('./config/db');
 
-dotenv.config({ path: __dirname + '/.env' });
-connectDB();
-
 const importData = async () => {
     try {
         console.log(`Connecting to: ${mongoose.connection.host}`);
@@ -1138,10 +1135,10 @@ const importData = async () => {
 
         await Course.insertMany(allCourses);
         console.log(`Successfully Imported ${allCourses.length} Courses!`);
-        process.exit();
+        return true;
     } catch (error) {
         console.error(`${error}`);
-        process.exit(1);
+        throw error;
     }
 };
 
@@ -1150,16 +1147,24 @@ const destroyData = async () => {
         await Course.deleteMany();
         await User.deleteMany();
         console.log('Data Destroyed!');
-        process.exit();
+        return true;
     } catch (error) {
         console.error(`${error}`);
-        process.exit(1);
+        throw error;
     }
 };
 
 if (require.main === module) {
-    if (process.argv[2] === '-d') destroyData();
-    else importData();
+    dotenv.config({ path: __dirname + '/.env' });
+    connectDB().then(async () => {
+        try {
+            if (process.argv[2] === '-d') await destroyData();
+            else await importData();
+            process.exit(0);
+        } catch (err) {
+            process.exit(1);
+        }
+    });
 }
 
 module.exports = { importData, destroyData };
