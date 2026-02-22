@@ -6,6 +6,11 @@ import { motion } from 'framer-motion';
 import { Search, BookOpen } from 'lucide-react';
 
 const CoursesPage = () => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [myEnrollments, setMyEnrollments] = useState([]);
+    const [searchParams] = useSearchParams();
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || searchParams.get('category') || '');
     const [error, setError] = useState(null);
 
     useEffect(() => {
