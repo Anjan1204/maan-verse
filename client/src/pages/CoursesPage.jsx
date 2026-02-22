@@ -6,37 +6,46 @@ import { motion } from 'framer-motion';
 import { Search, BookOpen } from 'lucide-react';
 
 const CoursesPage = () => {
-    const [courses, setCourses] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [myEnrollments, setMyEnrollments] = useState([]);
-    const [searchParams] = useSearchParams();
-    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || searchParams.get('category') || '');
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const query = searchParams.get('search') || searchParams.get('category') || '';
         setSearchTerm(query);
     }, [searchParams]);
+
     const { user } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
+            setError(null);
             try {
                 const coursesRes = await api.get('/courses');
                 if (Array.isArray(coursesRes.data)) {
                     setCourses(coursesRes.data);
                 } else {
                     console.error('Courses data is not an array:', coursesRes.data);
+                    setError('Received invalid data format from server');
                 }
 
                 if (user && user.role === 'student') {
-                    const enrollRes = await api.get('/enrollments/my');
-                    setMyEnrollments(enrollRes.data.map(e => e.course._id));
+                    try {
+                        const enrollRes = await api.get('/enrollments/my');
+                        setMyEnrollments(enrollRes.data.map(e => e.course?._id).filter(id => id));
+                    } catch (err) {
+                        console.warn('Enrollment check failed:', err.message);
+                        // Don't set global error for this, just continue
+                    }
                 }
-            } catch (error) {
-                console.error('FETCH ERROR:', error.message);
-                if (error.response) {
-                    console.error('Response Error:', error.response.status, error.response.data);
+            } catch (err) {
+                console.error('FETCH ERROR:', err.message);
+                setError(err.message === 'Network Error'
+                    ? `Cannot connect to server at ${api.defaults.baseURL}. Please check if the backend is running and CORS is allowed.`
+                    : `Error loading courses: ${err.message}`);
+
+                if (err.response) {
+                    console.error('Response Error:', err.response.status, err.response.data);
                 }
             } finally {
                 setLoading(false);
@@ -89,6 +98,19 @@ const CoursesPage = () => {
                         </button> */}
                     </div>
                 </div>
+
+                {error && (
+                    <div className="mb-12 p-6 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400">
+                        <h3 className="text-xl font-bold mb-2">Connection Issue Detected</h3>
+                        <p className="mb-4">{error}</p>
+                        <div className="text-xs bg-black/30 p-4 rounded-xl font-mono break-all opacity-70">
+                            DEBUG INFO:<br />
+                            API Base: {api.defaults.baseURL}<br />
+                            Environment: {import.meta.env.MODE}<br />
+                            VITE_API_URL: {import.meta.env.VITE_API_URL || 'NOT SET'}
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredCourses.map((course, index) => {
@@ -143,10 +165,13 @@ const CoursesPage = () => {
                     })}
                 </div>
 
-                {filteredCourses.length === 0 && (
+                {filteredCourses.length === 0 && !error && (
                     <div className="text-center py-20 text-gray-500">
                         <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
                         <p className="text-xl">No courses found matching your criteria</p>
+                        <div className="mt-8 text-xs font-mono opacity-30">
+                            Check: {api.defaults.baseURL}/courses
+                        </div>
                     </div>
                 )}
             </div>

@@ -154,7 +154,12 @@ const startServer = async () => {
         }
 
         const server = app.listen(PORT, () => {
-            console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+            console.log(`-------------------------------------------`);
+            console.log(`MAAN-verse Server Started!`);
+            console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`Port: ${PORT}`);
+            console.log(`Initial Courses Detected: ${count}`);
+            console.log(`-------------------------------------------`);
         });
 
         const io = require('socket.io')(server, {
